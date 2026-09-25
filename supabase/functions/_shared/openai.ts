@@ -53,7 +53,10 @@ function openaiError(status: number, detail: string, model: string) {
     return new HttpError(502, 'The OpenAI account has no API credit left. Add credit at platform.openai.com → Settings → Billing.')
   }
   if (/verif/i.test(text)) {
-    return new HttpError(502, 'Image creation needs a verified OpenAI organisation. Verify it at platform.openai.com → Settings → Organization → General.')
+    return new HttpError(
+      502,
+      `The AI model "${model}" needs a verified OpenAI organisation. Verify it at platform.openai.com → Settings → Organization → General, or choose another model in Supabase.`,
+    )
   }
   if (status === 404 || code === 'model_not_found' || /model/i.test(code)) {
     return new HttpError(502, `The AI model "${model}" isn't available on this OpenAI account. Change OPENAI_MODEL or OPENAI_IMAGE_MODEL in Supabase.`)
