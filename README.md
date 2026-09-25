@@ -8,7 +8,7 @@ React + Vite + Tailwind v4 front end; Supabase for auth, Postgres (RLS on every 
 
 ## Deploy your own copy
 
-The repo contains no keys, so a fresh copy needs its own Supabase settings. The app shows a "needs its Supabase settings" screen until they're added. You need a Supabase project, an OpenAI API key and Node 20+.
+By default the app connects to the course project's shared Supabase project (public URL + anon key in `src/lib/supabase.js`), so a fresh copy works with no setup. To use your own Supabase project instead, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; they override the defaults. You need a Supabase project, an OpenAI API key and Node 20+.
 
 1. **Supabase project**: create one at supabase.com (the free plan is fine). Note the project ref, the database password, and the URL and anon key under Project Settings → API.
 2. **Database, storage and functions** (from a clone of this repo):
