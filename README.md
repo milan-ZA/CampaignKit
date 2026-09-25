@@ -6,6 +6,34 @@ Brand profile once → short campaign brief → AI-generated, editable week-by-w
 
 React + Vite + Tailwind v4 front end; Supabase for auth, Postgres (RLS on every table), Storage and Edge Functions. OpenAI is called **only** from Edge Functions.
 
+## Deploy your own copy
+
+The repo contains no keys, so a fresh copy needs its own Supabase settings. The app shows a "needs its Supabase settings" screen until they're added. You need a Supabase project, an OpenAI API key and Node 20+.
+
+1. **Supabase project**: create one at supabase.com (the free plan is fine). Note the project ref, the database password, and the URL and anon key under Project Settings → API.
+2. **Database, storage and functions** (from a clone of this repo):
+   ```bash
+   npm install
+   npx supabase login
+   npx supabase link --project-ref YOUR-PROJECT-REF
+   npx supabase db push
+   npx supabase functions deploy
+   npx supabase secrets set OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-5-mini OPENAI_IMAGE_MODEL=gpt-image-1
+   ```
+   If you forked the repo, you can instead add the three repository secrets listed under Deployment and run the "Deploy Supabase" workflow.
+3. **Auth URLs**: in Supabase → Authentication → URL Configuration, set the Site URL to where the app runs and add it (plus `http://localhost:5173/**`) to Redirect URLs.
+4. **Website**:
+   - Locally: copy `.env.example` to `.env.local`, fill in the URL and anon key, then run `npm run dev`.
+   - On a host (Bolt, Netlify, Vercel): set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as environment variables. Build command `npm run build`, output folder `dist`. Redeploy after changing them.
+
+| Message you see | What's missing |
+| --- | --- |
+| "CampaignKit needs its Supabase settings" | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (step 4) |
+| "This Supabase project isn't set up yet: the database tables are missing" | `supabase db push` (step 2) |
+| "The AI feature … isn't set up on this Supabase project yet" | `supabase functions deploy` (step 2) |
+| "The AI service is not set up yet" | the OpenAI secrets (step 2) |
+| Confirmation email link opens the wrong address | Auth URLs (step 3) |
+
 ## Deployment
 
 - **Backend (Supabase):** `.github/workflows/deploy-supabase.yml` runs on every push to `main` that touches `supabase/`, and can also be run by hand from the Actions tab. It applies migrations and deploys the Edge Functions. It needs the repository secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_ID`. Until those exist it skips with a warning.

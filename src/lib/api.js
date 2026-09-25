@@ -1,5 +1,17 @@
 import { IMAGE_BUCKET, supabase } from './supabase'
 
+/**
+ * Turns a database error into a message. When the tables don't exist yet (the migration
+ * hasn't been applied to this Supabase project) it says so, instead of a vague failure.
+ */
+export function describeDbError(error, fallback) {
+  const missingTable = error?.code === 'PGRST205' || error?.code === '42P01' || /schema cache|does not exist/i.test(error?.message ?? '')
+  if (missingTable) {
+    return "This Supabase project isn't set up yet: the database tables are missing. Apply the migration in supabase/migrations (see README → Deploy your own copy)."
+  }
+  return fallback
+}
+
 /** Calls an Edge Function and turns any failure into an Error with a friendly message. */
 export async function callFunction(name, body) {
   const { data, error } = await supabase.functions.invoke(name, { body })
@@ -7,6 +19,9 @@ export async function callFunction(name, body) {
     let message = 'Something went wrong. Please try again.'
     if (error.name === 'FunctionsFetchError' || error.name === 'FunctionsRelayError') {
       message = "We couldn't reach the server. Check your connection and try again."
+    }
+    if (error.context?.status === 404) {
+      message = `The AI feature "${name}" isn't set up on this Supabase project yet. Deploy the Edge Functions (see README → Deploy your own copy).`
     }
     try {
       const payload = await error.context?.json()

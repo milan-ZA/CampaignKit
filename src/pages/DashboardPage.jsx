@@ -4,7 +4,7 @@ import Icon from '../components/Icon'
 import { ErrorState, InlineError, LoadingState, Spinner, ToneChips } from '../components/ui'
 import { useBrand } from '../context/BrandContext'
 import { useConfirm } from '../context/ConfirmContext'
-import { deleteCampaign } from '../lib/api'
+import { deleteCampaign, describeDbError } from '../lib/api'
 import { formatTimestamp } from '../lib/dates'
 import { supabase } from '../lib/supabase'
 
@@ -24,7 +24,7 @@ export default function DashboardPage() {
       .from('campaigns')
       .select('id, name, goal, duration_weeks, created_at, campaign_items(count)')
       .order('created_at', { ascending: false })
-    if (err) setError("We couldn't load your campaigns.")
+    if (err) setError(describeDbError(err, "We couldn't load your campaigns."))
     else setCampaigns(data)
   }, [])
 

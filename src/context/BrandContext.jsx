@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { describeDbError } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 
@@ -16,7 +17,7 @@ export function BrandProvider({ children }) {
     setLoading(true)
     setError(null)
     const { data, error: err } = await supabase.from('brand_profiles').select('*').eq('user_id', user.id).maybeSingle()
-    if (err) setError("We couldn't load your brand profile.")
+    if (err) setError(describeDbError(err, "We couldn't load your brand profile."))
     else setProfile(data)
     setLoading(false)
   }, [user])

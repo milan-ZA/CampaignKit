@@ -6,7 +6,7 @@ import PostCard from '../components/plan/PostCard'
 import PostPreview from '../components/plan/PostPreview'
 import { ChannelPill, ErrorState, InlineError, LoadingState, Spinner } from '../components/ui'
 import { useBrand } from '../context/BrandContext'
-import { callFunction, deleteItem, loadImagesForItems, removeImageFiles } from '../lib/api'
+import { callFunction, deleteItem, describeDbError, loadImagesForItems, removeImageFiles } from '../lib/api'
 import { addDays, formatDate, formatRange, weekForDate, weekRange } from '../lib/dates'
 import { supabase } from '../lib/supabase'
 
@@ -44,6 +44,7 @@ export default function CampaignPlanPage() {
   const [images, setImages] = useState({}) // itemId -> [image]
   const [imageJobs, setImageJobs] = useState({}) // itemId -> { status, error }
   const [loadState, setLoadState] = useState('loading') // loading | ready | error | missing
+  const [loadError, setLoadError] = useState(null)
   const [saveStatus, setSaveStatus] = useState(null)
   const [previewId, setPreviewId] = useState(null)
   const [adding, setAdding] = useState(null)
@@ -81,6 +82,7 @@ export default function CampaignPlanPage() {
       setLoadState('ready')
     } catch (err) {
       console.error(err)
+      setLoadError(describeDbError(err, "We couldn't load this plan."))
       setLoadState('error')
     }
   }, [id])
@@ -229,7 +231,7 @@ export default function CampaignPlanPage() {
   if (loadState === 'error') {
     return (
       <main className="px-4 py-12">
-        <ErrorState message="We couldn't load this plan." onRetry={load} />
+        <ErrorState message={loadError} onRetry={load} />
       </main>
     )
   }
