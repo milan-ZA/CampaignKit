@@ -95,16 +95,14 @@ export async function chatJson(messages: Message[]): Promise<any> {
   }
 }
 
-/** Returns PNG bytes for each generated image. */
-export async function generateImages(prompt: string, size: string, n: number): Promise<Uint8Array[]> {
-  const data = await openaiFetch('images/generations', {
-    model: env('OPENAI_IMAGE_MODEL'),
-    prompt,
-    n,
-    size,
-    quality: 'medium',
-  })
+// dall-e-3 only makes square, 1792x1024 and 1024x1792 images, one per request.
+const DALLE3_SIZES: Record<string, string> = {
+  '1024x1024': '1024x1024',
+  '1536x1024': '1792x1024',
+  '1024x1536': '1024x1792',
+}
 
+async function toBytes(data: any): Promise<Uint8Array[]> {
   const out: Uint8Array[] = []
   for (const img of data?.data ?? []) {
     if (img.b64_json) {
@@ -115,9 +113,44 @@ export async function generateImages(prompt: string, size: string, n: number): P
       out.push(new Uint8Array(await r.arrayBuffer()))
     }
   }
-  if (out.length < n) {
-    console.error(`Expected ${n} images, got ${out.length}`)
+  return out
+}
+
+/**
+ * Returns PNG bytes for each generated image and the size actually used.
+ * Works with gpt-image-* models (one request, n images) and dall-e-3 (n parallel requests),
+ * depending on OPENAI_IMAGE_MODEL.
+ */
+export async function generateImages(
+  prompt: string,
+  size: string,
+  n: number,
+): Promise<{ images: Uint8Array[]; size: string }> {
+  const model = env('OPENAI_IMAGE_MODEL')
+  let images: Uint8Array[]
+  let usedSize = size
+
+  if (model.startsWith('dall-e-3')) {
+    usedSize = DALLE3_SIZES[size] ?? '1024x1024'
+    const request = () =>
+      openaiFetch('images/generations', {
+        model,
+        prompt: prompt.slice(0, 3900), // dall-e-3 accepts up to 4,000 characters
+        n: 1,
+        size: usedSize,
+        quality: 'standard',
+        response_format: 'b64_json',
+      }).then(toBytes)
+    images = (await Promise.all(Array.from({ length: n }, request))).flat()
+  } else {
+    images = await toBytes(
+      await openaiFetch('images/generations', { model, prompt, n, size, quality: 'medium' }),
+    )
+  }
+
+  if (images.length < n) {
+    console.error(`Expected ${n} images, got ${images.length}`)
     throw new HttpError(502, 'The AI service did not create all the images. Please try again.')
   }
-  return out
+  return { images, size: usedSize }
 }

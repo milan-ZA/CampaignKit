@@ -38,6 +38,7 @@ By default the app connects to the course project's shared Supabase project (pub
 
 - **Backend (Supabase):** `.github/workflows/deploy-supabase.yml` runs on every push to `main` that touches `supabase/`, and can also be run by hand from the Actions tab. It applies migrations and deploys the Edge Functions. It needs the repository secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_ID`. Until those exist it skips with a warning.
 - **Website:** any static host that builds from GitHub (for example Bolt.new, Netlify or Vercel). Build command `npm run build`, output folder `dist`, and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. `public/_redirects` sends every path to `index.html` so page refreshes work.
+- **Image model:** `OPENAI_IMAGE_MODEL` can be `gpt-image-1` (needs a verified OpenAI organisation) or `dall-e-3` (3 separate requests, sizes 1024x1024 / 1792x1024 / 1024x1792).
 - **OpenAI secrets** live only in Supabase: `npx supabase secrets set OPENAI_API_KEY=... OPENAI_MODEL=... OPENAI_IMAGE_MODEL=...`
 - `.github/workflows/check.yml` builds the site and type-checks the Edge Functions on every push.
 

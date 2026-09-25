@@ -47,7 +47,8 @@ serve(async (req) => {
     .join('\n')
 
   // ---- Generate ----------------------------------------------------------------
-  const pictures = await generateImages(prompt, size, IMAGE_COUNT)
+  // The model may use a slightly different size (dall-e-3 has fixed sizes); store what was made.
+  const { images: pictures, size: usedSize } = await generateImages(prompt, size, IMAGE_COUNT)
 
   // ---- Upload new files; roll back this run on any failure -------------------
   const newRows: { id: string; storage_path: string; prompt: string; size: string }[] = []
@@ -64,7 +65,7 @@ serve(async (req) => {
         upsert: false,
       })
       if (error) throw error
-      newRows.push({ id, storage_path, prompt, size })
+      newRows.push({ id, storage_path, prompt, size: usedSize })
     }
   } catch (err) {
     console.error('Upload failed', err)
