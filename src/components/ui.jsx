@@ -1,4 +1,5 @@
 import { channelColors } from '../lib/channels'
+import { formatTimestamp } from '../lib/dates'
 import Icon from './Icon'
 
 export function Spinner({ size = 20, className = '' }) {
@@ -75,9 +76,8 @@ export function ToneChips({ words }) {
 export function formatSavedAt(ts) {
   if (!ts) return ''
   const d = new Date(ts)
-  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
   const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-  return `${d.getDate()} ${month}, ${time}`
+  return `${formatTimestamp(ts).replace(/ \d{4}$/, '')}, ${time}`
 }
 
 export function LoadingState({ message = 'Loading…' }) {

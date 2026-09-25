@@ -15,6 +15,7 @@ export default function Modal({
   fullScreenOnMobile = false,
   role = 'dialog',
   className = '',
+  besidePanel = false, // on wide screens, leave the 420px edit panel uncovered and usable
 }) {
   const panelRef = useRef(null)
   const onCloseRef = useRef(onClose)
@@ -47,7 +48,7 @@ export default function Modal({
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center bg-backdrop ${
         fullScreenOnMobile ? 'p-0 sm:p-4' : 'p-4'
-      }`}
+      } ${besidePanel ? 'wide:right-[420px]' : ''}`}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}

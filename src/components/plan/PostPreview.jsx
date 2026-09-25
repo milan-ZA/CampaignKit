@@ -434,7 +434,7 @@ function LengthCheck({ channel, copy }) {
 // The modal
 // ---------------------------------------------------------------------------
 
-export default function PostPreview({ item, images, businessName, job, onGenerateImages, onClose }) {
+export default function PostPreview({ item, images, businessName, job, onGenerateImages, onClose, besidePanel = false }) {
   const [index, setIndex] = useState(0)
   const [copied, setCopied] = useState(false)
   const [downloadError, setDownloadError] = useState(null)
@@ -480,7 +480,13 @@ export default function PostPreview({ item, images, businessName, job, onGenerat
   }
 
   return (
-    <Modal onClose={onClose} width={info.wide ? 640 : 420} labelledBy="preview-title" fullScreenOnMobile>
+    <Modal
+      onClose={onClose}
+      width={info.wide ? 640 : 420}
+      labelledBy="preview-title"
+      fullScreenOnMobile
+      besidePanel={besidePanel}
+    >
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-surface px-4 py-2">
         <h2 id="preview-title" className="sr-only">
           Post preview

@@ -13,9 +13,18 @@ const toIso = (t) => new Date(t).toISOString().slice(0, 10)
 
 export const addDays = (iso, n) => toIso(toTime(iso) + n * DAY)
 
-export function formatDate(iso, opts = { day: 'numeric', month: 'short' }) {
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+// Fixed English short names ("25 Sep"), so dates look the same whatever the browser's language.
+// opts: { weekday, year } are switched on by any truthy value (Intl-style options also work).
+export function formatDate(iso, opts = {}) {
   if (!iso) return ''
-  return new Date(toTime(iso)).toLocaleDateString(undefined, { ...opts, timeZone: 'UTC' })
+  const d = new Date(toTime(iso))
+  const parts = [`${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`]
+  if (opts.weekday) parts.unshift(WEEKDAYS[d.getUTCDay()])
+  if (opts.year) parts.push(String(d.getUTCFullYear()))
+  return parts.join(' ')
 }
 
 export function formatRange(from, to) {
@@ -34,5 +43,6 @@ export function weekForDate(startDate, iso) {
 }
 
 export function formatTimestamp(ts) {
-  return new Date(ts).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+  const d = new Date(ts)
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
 }

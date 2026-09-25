@@ -383,6 +383,8 @@ export default function CampaignPlanPage() {
           job={imageJobs[previewItem.id]}
           onGenerateImages={() => generateImages(previewItem.id)}
           onClose={() => setPreviewId(null)}
+          // Keep the edit panel usable so edits show in the preview straight away.
+          besidePanel={previewItem.id === selectedId}
         />
       )}
     </div>
