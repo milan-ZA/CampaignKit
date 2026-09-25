@@ -28,13 +28,44 @@ async function openaiFetch(path: string, body: unknown) {
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
     console.error(`OpenAI ${path} failed`, res.status, detail)
-    if (res.status === 429) throw new HttpError(429, 'The AI service is busy right now. Please wait a moment and try again.')
-    if (res.status === 400 && /safety|moderation/i.test(detail)) {
-      throw new HttpError(400, 'The AI service would not create this. Try changing the wording of the post.')
-    }
-    throw new HttpError(502, 'The AI service had a problem. Please try again.')
+    throw openaiError(res.status, detail, (body as { model?: string })?.model ?? '')
   }
   return res.json()
+}
+
+/** Maps an OpenAI error to a message that says what to fix. */
+function openaiError(status: number, detail: string, model: string) {
+  let code = ''
+  let message = ''
+  try {
+    const parsed = JSON.parse(detail)?.error ?? {}
+    code = String(parsed.code ?? parsed.type ?? '')
+    message = String(parsed.message ?? '')
+  } catch {
+    // not JSON
+  }
+  const text = `${code} ${message}`
+
+  if (status === 401 || code === 'invalid_api_key') {
+    return new HttpError(502, 'The OpenAI key saved in Supabase (OPENAI_API_KEY) was not accepted. Check it and save it again.')
+  }
+  if (code === 'insufficient_quota' || /quota|billing/i.test(text)) {
+    return new HttpError(502, 'The OpenAI account has no API credit left. Add credit at platform.openai.com → Settings → Billing.')
+  }
+  if (/verif/i.test(text)) {
+    return new HttpError(502, 'Image creation needs a verified OpenAI organisation. Verify it at platform.openai.com → Settings → Organization → General.')
+  }
+  if (status === 404 || code === 'model_not_found' || /model/i.test(code)) {
+    return new HttpError(502, `The AI model "${model}" isn't available on this OpenAI account. Change OPENAI_MODEL or OPENAI_IMAGE_MODEL in Supabase.`)
+  }
+  if (status === 429) return new HttpError(429, 'The AI service is busy right now. Please wait a moment and try again.')
+  if (status === 400 && /safety|moderation/i.test(text)) {
+    return new HttpError(400, 'The AI service would not create this. Try changing the wording of the post.')
+  }
+  if (status === 400 && message) {
+    return new HttpError(502, `The AI service rejected the request: ${message.slice(0, 200)}`)
+  }
+  return new HttpError(502, 'The AI service had a problem. Please try again.')
 }
 
 type Message = { role: 'system' | 'user'; content: string }

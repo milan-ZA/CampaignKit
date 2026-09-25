@@ -75,9 +75,9 @@ export function ToneChips({ words }) {
 export function formatSavedAt(ts) {
   if (!ts) return ''
   const d = new Date(ts)
-  const day = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-  return `${day}, ${time}`
+  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
+  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  return `${d.getDate()} ${month}, ${time}`
 }
 
 export function LoadingState({ message = 'Loading…' }) {

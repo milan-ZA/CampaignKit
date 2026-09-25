@@ -190,11 +190,13 @@ export default function BrandProfilePage() {
       setStatus('saving')
       const row = { user_id: user.id }
       for (const [k, v] of Object.entries(patch)) row[k] = normalise(v)
-      const { data, error } = await supabase
-        .from('brand_profiles')
-        .upsert(row, { onConflict: 'user_id' })
-        .select()
-        .single()
+      const upsert = () => supabase.from('brand_profiles').upsert(row, { onConflict: 'user_id' }).select().single()
+      let { data, error } = await upsert()
+      // A network blip (no database error code) gets one quiet retry before we show an error.
+      if (error && !error.code) {
+        await new Promise((r) => setTimeout(r, 800))
+        ;({ data, error } = await upsert())
+      }
       for (const k of Object.keys(patch)) {
         if (pending.current[k] === patch[k]) delete pending.current[k]
       }
@@ -379,7 +381,7 @@ export default function BrandProfilePage() {
         </div>
       </div>
 
-      <div className="mt-6 flex gap-1 overflow-x-auto border-b border-border" role="tablist" aria-label="Brand profile sections">
+      <div className="mt-6 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-border" role="tablist" aria-label="Brand profile sections">
         {TABS.map((t) => {
           const active = t.key === tab
           const done = SECTION_DONE[t.key](form)
