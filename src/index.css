@@ -1,0 +1,279 @@
+@import 'tailwindcss';
+
+/* Every colour in the app comes from these tokens. The default Tailwind palette is removed
+   so components can't hard-code colours by accident. */
+@theme {
+  --color-*: initial;
+  --breakpoint-wide: 900px;
+}
+
+@theme inline {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --color-page: var(--c-page);
+  --color-header: var(--c-header);
+  --color-on-header: var(--c-on-header);
+  --color-on-header-muted: var(--c-on-header-muted);
+  --color-surface: var(--c-surface);
+  --color-week: var(--c-week);
+  --color-card: var(--c-card);
+  --color-border: var(--c-border);
+  --color-input: var(--c-input);
+  --color-heading: var(--c-heading);
+  --color-body: var(--c-body);
+  --color-muted: var(--c-muted);
+  --color-link: var(--c-link);
+  --color-link-soft: var(--c-link-soft);
+  --color-success: var(--c-success);
+  --color-success-soft: var(--c-success-soft);
+  --color-error: var(--c-error);
+  --color-error-soft: var(--c-error-soft);
+  --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-on-accent: var(--c-on-accent);
+  --color-hover: var(--c-hover);
+  --color-logo-mark: var(--c-logo-mark);
+  --color-logo-text: var(--c-logo-text);
+
+  --color-pv-frame: var(--c-pv-frame);
+  --color-pv-text: var(--c-pv-text);
+  --color-pv-muted: var(--c-pv-muted);
+  --color-pv-divider: var(--c-pv-divider);
+  --color-pv-chrome: var(--c-pv-chrome);
+  --color-pv-avatar: var(--c-pv-avatar);
+  --color-pv-on-avatar: var(--c-pv-on-avatar);
+  --color-pv-button: var(--c-pv-button);
+  --color-pv-on-button: var(--c-pv-on-button);
+  --color-pv-on-image: var(--c-pv-on-image);
+  --color-pv-scrim: var(--c-pv-scrim);
+  --color-chat-bg: var(--c-chat-bg);
+  --color-chat-bubble: var(--c-chat-bubble);
+  --color-poster-wall: var(--c-poster-wall);
+  --color-poster-paper: var(--c-poster-paper);
+  --color-img-placeholder: var(--c-img-placeholder);
+  --color-backdrop: var(--c-backdrop);
+
+  --shadow-card: var(--c-shadow-card);
+  --shadow-pop: var(--c-shadow-pop);
+}
+
+:root {
+  color-scheme: light;
+  --c-page: #f8fafc;
+  --c-header: #1e293b;
+  --c-on-header: #f8fafc;
+  --c-on-header-muted: #cbd5e1;
+  --c-surface: #ffffff;
+  --c-week: #eef2f7;
+  --c-card: #ffffff;
+  --c-border: #e2e8f0;
+  --c-input: #cbd5e1;
+  --c-heading: #0f172a;
+  --c-body: #334155;
+  --c-muted: #475569;
+  --c-link: #2754c5;
+  --c-link-soft: #eef2ff;
+  --c-success: #047857;
+  --c-success-soft: #ecfdf5;
+  --c-error: #b91c1c;
+  --c-error-soft: #fef2f2;
+  --c-accent: #f29a4a;
+  --c-accent-hover: #e8883a;
+  --c-on-accent: #1c1917;
+  --c-hover: #f1f5f9;
+  --c-logo-mark: #fa6843;
+  --c-logo-text: #152a4e;
+
+  --c-pv-frame: #ffffff;
+  --c-pv-text: #0f172a;
+  --c-pv-muted: #64748b;
+  --c-pv-divider: #e2e8f0;
+  --c-pv-chrome: #f1f5f9;
+  --c-pv-avatar: #334155;
+  --c-pv-on-avatar: #ffffff;
+  --c-pv-button: #0f172a;
+  --c-pv-on-button: #ffffff;
+  --c-pv-on-image: #ffffff;
+  --c-pv-scrim: rgba(0, 0, 0, 0.72);
+  --c-chat-bg: #efeae2;
+  --c-chat-bubble: #ffffff;
+  --c-chat-pattern: rgba(15, 23, 42, 0.06);
+  --c-poster-wall: #e7e5e4;
+  --c-poster-paper: #ffffff;
+  --c-img-placeholder: #e2e8f0;
+  --c-backdrop: rgba(15, 23, 42, 0.6);
+
+  --c-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --c-shadow-pop: 0 12px 40px rgba(15, 23, 42, 0.18);
+
+  /* Channel pills: light fill, dark text */
+  --ch-instagram-bg: #fce7f3; --ch-instagram-fg: #9d174d;
+  --ch-facebook-bg: #dbeafe; --ch-facebook-fg: #1e3a8a;
+  --ch-tiktok-bg: #cffafe; --ch-tiktok-fg: #155e75;
+  --ch-linkedin-bg: #e0e7ff; --ch-linkedin-fg: #3730a3;
+  --ch-whatsapp-bg: #dcfce7; --ch-whatsapp-fg: #166534;
+  --ch-email-bg: #fef3c7; --ch-email-fg: #92400e;
+  --ch-gbp-bg: #fee2e2; --ch-gbp-fg: #991b1b;
+  --ch-instore-bg: #ede9fe; --ch-instore-fg: #5b21b6;
+  --ch-other-bg: #e2e8f0; --ch-other-fg: #334155;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --c-page: #0b1120;
+  --c-header: #020617;
+  --c-on-header: #f1f5f9;
+  --c-on-header-muted: #94a3b8;
+  --c-surface: #111a2b;
+  --c-week: #0f1829;
+  --c-card: #18243a;
+  --c-border: #243247;
+  --c-input: #34445e;
+  --c-heading: #f1f5f9;
+  --c-body: #cbd5e1;
+  --c-muted: #94a3b8;
+  --c-link: #7c9cff;
+  --c-link-soft: #18244a;
+  --c-success: #34d399;
+  --c-success-soft: #06281d;
+  --c-error: #fca5a5;
+  --c-error-soft: #3a1113;
+  --c-accent: #f29a4a;
+  --c-accent-hover: #f6ad6a;
+  --c-on-accent: #1c1917;
+  --c-hover: #1b2740;
+  --c-logo-mark: #fa6843;
+  --c-logo-text: #f1f5f9;
+
+  --c-pv-frame: #000000;
+  --c-pv-text: #f1f5f9;
+  --c-pv-muted: #94a3b8;
+  --c-pv-divider: #262626;
+  --c-pv-chrome: #171717;
+  --c-pv-avatar: #cbd5e1;
+  --c-pv-on-avatar: #0f172a;
+  --c-pv-button: #f1f5f9;
+  --c-pv-on-button: #0f172a;
+  --c-pv-on-image: #ffffff;
+  --c-pv-scrim: rgba(0, 0, 0, 0.78);
+  --c-chat-bg: #0b141a;
+  --c-chat-bubble: #1f2c34;
+  --c-chat-pattern: rgba(255, 255, 255, 0.04);
+  --c-poster-wall: #292524;
+  --c-poster-paper: #1c1917;
+  --c-img-placeholder: #1e293b;
+  --c-backdrop: rgba(0, 0, 0, 0.7);
+
+  --c-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --c-shadow-pop: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  /* Channel pills: dark fill, light text */
+  --ch-instagram-bg: #500724; --ch-instagram-fg: #fbcfe8;
+  --ch-facebook-bg: #172554; --ch-facebook-fg: #bfdbfe;
+  --ch-tiktok-bg: #083344; --ch-tiktok-fg: #a5f3fc;
+  --ch-linkedin-bg: #1e1b4b; --ch-linkedin-fg: #c7d2fe;
+  --ch-whatsapp-bg: #052e16; --ch-whatsapp-fg: #bbf7d0;
+  --ch-email-bg: #451a03; --ch-email-fg: #fde68a;
+  --ch-gbp-bg: #450a0a; --ch-gbp-fg: #fecaca;
+  --ch-instore-bg: #2e1065; --ch-instore-fg: #ddd6fe;
+  --ch-other-bg: #1e293b; --ch-other-fg: #cbd5e1;
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--c-page);
+    color: var(--c-body);
+  }
+  body {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--c-heading);
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-link);
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  .btn,
+  .btn-accent,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-danger {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-accent {
+    @apply bg-accent text-on-accent hover:bg-accent-hover;
+  }
+  .btn-secondary {
+    @apply border border-input bg-surface text-heading hover:bg-hover;
+  }
+  .btn-ghost {
+    @apply text-body hover:bg-hover;
+  }
+  .btn-danger {
+    @apply border border-error text-error hover:bg-error-soft;
+  }
+  .btn-icon {
+    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-heading;
+  }
+  .link {
+    @apply font-semibold text-link underline-offset-2 hover:underline;
+  }
+  .input {
+    @apply w-full rounded-lg border border-input bg-surface px-3 py-2.5 text-[15px] text-heading placeholder:text-muted focus:border-link focus:outline-2 focus:outline-offset-0 focus:outline-link;
+    min-height: 44px;
+  }
+  .label {
+    @apply block text-sm font-semibold text-heading;
+  }
+  .hint {
+    @apply mt-1 text-[13px] text-muted;
+  }
+  .card {
+    @apply rounded-2xl border border-border bg-surface shadow-card;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-[13px] font-medium text-body;
+  }
+}
+
+/* WhatsApp-style chat wallpaper: a quiet dot pattern drawn from tokens. */
+.chat-wallpaper {
+  background-color: var(--c-chat-bg);
+  background-image: radial-gradient(var(--c-chat-pattern) 1.5px, transparent 1.5px),
+    radial-gradient(var(--c-chat-pattern) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+  background-position: 0 0, 11px 11px;
+}
+
+.scrim-bottom {
+  background: linear-gradient(to top, var(--c-pv-scrim), transparent);
+}
+
+@keyframes ck-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+.animate-soft-pulse {
+  animation: ck-pulse 1.6s ease-in-out infinite;
+}
