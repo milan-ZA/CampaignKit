@@ -17,7 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useBrand } from '../context/BrandContext'
 import { useConfirm } from '../context/ConfirmContext'
-import { CHANNEL_INFO, CHANNELS, EMOJI_OPTIONS, LANGUAGES, PRICE_LEVELS, TONE_WORDS, VISUAL_STYLES } from '../lib/channels'
+import { CHANNEL_INFO, CHANNELS, EMOJI_OPTIONS, LANGUAGE_ROWS, PRICE_LEVELS, TONE_WORDS, VISUAL_STYLES } from '../lib/channels'
 import { supabase } from '../lib/supabase'
 
 const TEXT_MAX = 500
@@ -511,16 +511,6 @@ export default function BrandProfilePage() {
           <>
             {textField(BUSINESS_FIELDS[0])}
             {requiredError('business_name', 'Please add your business name.')}
-            {textField(BUSINESS_FIELDS[1])}
-            {requiredError('what_you_sell', 'Please tell us what you sell.')}
-            {BUSINESS_FIELDS.slice(2).map(textField)}
-            <ChoiceGroup
-              label="Price level"
-              example="How your prices compare with similar businesses nearby."
-              options={PRICE_LEVELS}
-              value={form.price_level}
-              onChange={setAndSave('price_level')}
-            />
             <Field
               id="website"
               label="Your website"
@@ -538,6 +528,16 @@ export default function BrandProfilePage() {
             />
             {websiteError && <p className="-mt-3 text-sm font-medium text-error">{websiteError}</p>}
             <LogoUpload userId={user.id} path={profile?.logo_path ?? null} onSave={(logo_path) => persist({ logo_path })} />
+            {textField(BUSINESS_FIELDS[1])}
+            {requiredError('what_you_sell', 'Please tell us what you sell.')}
+            {BUSINESS_FIELDS.slice(2).map(textField)}
+            <ChoiceGroup
+              label="Price level"
+              example="How your prices compare with similar businesses nearby."
+              options={PRICE_LEVELS}
+              value={form.price_level}
+              onChange={setAndSave('price_level')}
+            />
           </>
         )}
 
@@ -546,7 +546,12 @@ export default function BrandProfilePage() {
             <ChoiceGroup
               label="Language for your content"
               example="We write your plans, posts, ad scripts and creative briefs in this language."
-              options={LANGUAGES}
+              rows={LANGUAGE_ROWS}
+              after={
+                <span className="inline-flex min-h-11 items-center rounded-full border border-dashed border-input px-4 text-sm font-semibold text-muted">
+                  Others coming soon
+                </span>
+              }
               value={form.preferred_language || 'English'}
               onChange={setAndSave('preferred_language')}
             />

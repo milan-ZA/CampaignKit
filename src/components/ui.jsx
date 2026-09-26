@@ -193,7 +193,7 @@ export function Field({ id, label, example, value, onChange, onBlur, multiline, 
 }
 
 /** A group of pill-shaped single- or multi-choice buttons. */
-export function ChoiceGroup({ label, example, options, value, onChange, multiple = false, max }) {
+export function ChoiceGroup({ label, example, options, rows, after, value, onChange, multiple = false, max }) {
   const selected = multiple ? value ?? [] : [value]
   const toggle = (opt) => {
     if (!multiple) return onChange(opt)
@@ -204,27 +204,30 @@ export function ChoiceGroup({ label, example, options, value, onChange, multiple
   return (
     <fieldset>
       <legend className="label">{label}</legend>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {options.map((opt) => {
-          const on = selected.includes(opt)
-          const blocked = multiple && !on && max && selected.length >= max
-          return (
-            <button
-              key={opt}
-              type="button"
-              aria-pressed={on}
-              disabled={blocked}
-              onClick={() => toggle(opt)}
-              className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition-colors disabled:opacity-50 ${
-                on ? 'border-link bg-link-soft text-link' : 'border-input bg-surface text-body hover:bg-hover'
-              }`}
-            >
-              {on && <Icon name="check" size={16} />}
-              {opt}
-            </button>
-          )
-        })}
-      </div>
+      {(rows ?? [options]).map((row, r, all) => (
+        <div key={r} className="mt-2 flex flex-wrap gap-2">
+          {row.map((opt) => {
+            const on = selected.includes(opt)
+            const blocked = multiple && !on && max && selected.length >= max
+            return (
+              <button
+                key={opt}
+                type="button"
+                aria-pressed={on}
+                disabled={blocked}
+                onClick={() => toggle(opt)}
+                className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                  on ? 'border-link bg-link-soft text-link' : 'border-input bg-surface text-body hover:bg-hover'
+                }`}
+              >
+                {on && <Icon name="check" size={16} />}
+                {opt}
+              </button>
+            )
+          })}
+          {r === all.length - 1 && after}
+        </div>
+      ))}
       {example && <p className="hint">{example}</p>}
     </fieldset>
   )

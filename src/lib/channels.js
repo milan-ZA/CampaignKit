@@ -111,4 +111,9 @@ export const TONE_WORDS = ['Friendly', 'Warm', 'Playful', 'Bold', 'Calm', 'Exper
 export const PRICE_LEVELS = ['Budget', 'Mid-range', 'Premium']
 export const EMOJI_OPTIONS = ['None', 'A few', 'Lots']
 export const VISUAL_STYLES = ['Photo', 'Illustration', 'Simple graphic']
-export const LANGUAGES = ['English', 'Afrikaans', 'isiZulu', 'isiXhosa', 'Sesotho', 'Setswana', 'French', 'Portuguese']
+// Shown on the Brand guidelines tab in two rows, in this order.
+export const LANGUAGE_ROWS = [
+  ['English', 'French', 'Spanish', 'Portuguese'],
+  ['Afrikaans', 'isiZulu', 'isiXhosa'],
+]
+export const LANGUAGES = LANGUAGE_ROWS.flat()
