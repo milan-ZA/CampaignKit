@@ -5,6 +5,7 @@ import { LoadingState } from './components/ui'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { BrandProvider } from './context/BrandContext'
 import { ConfirmProvider } from './context/ConfirmContext'
+import AccountPage from './pages/AccountPage'
 import AuthPage from './pages/AuthPage'
 import BrandProfilePage from './pages/BrandProfilePage'
 import CampaignPlanPage from './pages/CampaignPlanPage'
@@ -63,6 +64,7 @@ export default function App() {
           <Route element={<RequireAuth />}>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/brand" element={<BrandProfilePage />} />
+            <Route path="/account" element={<AccountPage />} />
             <Route path="/campaigns/new" element={<NewCampaignPage />} />
             <Route path="/campaigns/:id" element={<CampaignPlanPage />} />
           </Route>

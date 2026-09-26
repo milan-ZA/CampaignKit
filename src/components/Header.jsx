@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import AccountMenu from './AccountMenu'
 import Icon from './Icon'
 import { Logo } from './ui'
 
@@ -11,7 +11,6 @@ const TABS = [
 ]
 
 export default function Header() {
-  const { signOut } = useAuth()
   const { theme, toggle } = useTheme()
   const { pathname } = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -70,14 +69,7 @@ export default function Header() {
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
             <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
           </button>
-          <button
-            type="button"
-            onClick={signOut}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-on-header-muted hover:text-on-header"
-          >
-            <Icon name="logout" size={18} />
-            <span className="hidden sm:inline">Log out</span>
-          </button>
+          <AccountMenu />
 
           <div className="relative wide:hidden" ref={menuRef}>
             <button
