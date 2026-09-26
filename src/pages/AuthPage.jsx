@@ -1,7 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Field, InlineError, Logo, Spinner } from '../components/ui'
+import { ACCOUNT_DELETED_KEY } from '../lib/api'
 import { supabase } from '../lib/supabase'
+
+/** One-time note after "Delete my account" on the Account settings page. */
+function readAccountDeletedNotice() {
+  try {
+    return sessionStorage.getItem(ACCOUNT_DELETED_KEY)
+      ? 'Your account and everything in it has been deleted. Thanks for trying CampaignKit.'
+      : null
+  } catch {
+    return null
+  }
+}
 
 function friendlyAuthError(error) {
   const msg = error?.message ?? ''
@@ -40,7 +52,16 @@ export default function AuthPage() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const [notice, setNotice] = useState(null)
+  const [notice, setNotice] = useState(readAccountDeletedNotice)
+
+  // Show the "account deleted" note once, then forget it.
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem(ACCOUNT_DELETED_KEY)
+    } catch {
+      // ignore
+    }
+  }, [])
 
   const switchMode = (next) => {
     setMode(next)

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Icon from '../components/Icon'
+import Modal from '../components/Modal'
 import { InlineError, Spinner } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { useConfirm } from '../context/ConfirmContext'
 import { useTheme } from '../context/ThemeContext'
+import { ACCOUNT_DELETED_KEY, callFunction } from '../lib/api'
 import { formatTimestamp } from '../lib/dates'
 import { supabase } from '../lib/supabase'
 
@@ -162,6 +164,96 @@ function Usage() {
   )
 }
 
+const CONFIRM_WORD = 'DELETE'
+
+function DeleteAccount() {
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [typed, setTyped] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+
+  const close = () => {
+    if (busy) return
+    setOpen(false)
+    setTyped('')
+    setError(null)
+  }
+
+  const remove = async (e) => {
+    e.preventDefault()
+    if (typed !== CONFIRM_WORD || busy) return
+    setBusy(true)
+    setError(null)
+    try {
+      await callFunction('delete-account', { confirm: typed })
+    } catch (err) {
+      setBusy(false)
+      return setError(err.message)
+    }
+    // The login no longer exists; clear it from this browser. The login page shows a goodbye note.
+    try {
+      sessionStorage.setItem(ACCOUNT_DELETED_KEY, '1')
+    } catch {
+      // Private mode: the user just won't see the note.
+    }
+    await supabase.auth.signOut({ scope: 'local' })
+    navigate('/login', { replace: true })
+  }
+
+  return (
+    <>
+      <ul className="mb-4 list-disc space-y-1 pl-5 text-sm text-body">
+        <li>Your login, brand profile and logo</li>
+        <li>All your campaigns and posts</li>
+        <li>All AI images you created</li>
+      </ul>
+      <button type="button" className="btn-danger" onClick={() => setOpen(true)}>
+        <Icon name="trash" size={16} /> Delete my account
+      </button>
+
+      {open && (
+        <Modal onClose={close} labelledBy="delete-title" width={440} role="alertdialog">
+          <form onSubmit={remove} className="p-6">
+            <h2 id="delete-title" className="text-lg">
+              Delete your account for good?
+            </h2>
+            <p className="mt-2 text-body">
+              This permanently deletes your login and everything you created in CampaignKit. You can't undo this.
+            </p>
+            <label htmlFor="confirm-delete" className="label mt-5">
+              Type {CONFIRM_WORD} to confirm
+            </label>
+            <input
+              id="confirm-delete"
+              className="input mt-1.5"
+              autoComplete="off"
+              autoFocus
+              value={typed}
+              onChange={(e) => setTyped(e.target.value.toUpperCase())}
+              disabled={busy}
+            />
+            {error && (
+              <div className="mt-3">
+                <InlineError message={error} />
+              </div>
+            )}
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <button type="button" className="btn-secondary" onClick={close} disabled={busy}>
+                Cancel
+              </button>
+              <button type="submit" className="btn-danger" disabled={typed !== CONFIRM_WORD || busy}>
+                {busy ? <Spinner size={16} /> : <Icon name="trash" size={16} />}
+                {busy ? 'Deleting…' : 'Delete my account'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </>
+  )
+}
+
 export default function AccountPage() {
   const { user } = useAuth()
   const { preference, setPreference } = useTheme()
@@ -264,6 +356,10 @@ export default function AccountPage() {
           {signingOut ? <Spinner size={16} /> : <Icon name="logout" size={16} />}
           Log out on all devices
         </button>
+      </Section>
+
+      <Section title="Delete my account" description="Permanently removes your account and everything in it.">
+        <DeleteAccount />
       </Section>
     </main>
   )

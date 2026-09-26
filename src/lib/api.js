@@ -12,6 +12,9 @@ export function describeDbError(error, fallback) {
   return fallback
 }
 
+/** Session-storage flag the login page reads to say "Your account has been deleted." */
+export const ACCOUNT_DELETED_KEY = 'ck-account-deleted'
+
 /** Calls an Edge Function and turns any failure into an Error with a friendly message. */
 export async function callFunction(name, body) {
   const { data, error } = await supabase.functions.invoke(name, { body })
