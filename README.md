@@ -18,7 +18,7 @@ CampaignKit helps small business owners with no marketing team. You set up your 
 - **AI extras per post:** a 15 to 30-second ad script, a creative brief for a designer, and 3 images sized for the channel.
 - **Previews:** see each post as it would look on Instagram, Facebook, TikTok, LinkedIn, WhatsApp, Email, Google Business Profile or an in-store poster, with a length check.
 - **Use it elsewhere:** copy any text for your preferred content app, export the campaign to Excel (.xlsx) or Google Sheets (.csv), and download all images as one ZIP, organised by week.
-- **Content language:** plans, copy, scripts and briefs can be written in English, Afrikaans, isiZulu, isiXhosa, Sesotho, Setswana, French or Portuguese.
+- **Content language:** plans, copy, scripts and briefs can be written in English, French, Spanish, Portuguese, Afrikaans, isiZulu or isiXhosa (more languages coming soon).
 - **Account settings** (menu under your initial, top right): see your account details, change your password, choose Light / Dark / Same as my device, see your usage, log out on all devices, or delete your account and everything in it.
 - Works on phones.
 
