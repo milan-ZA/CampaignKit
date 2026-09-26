@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { channelColors } from '../lib/channels'
 import { formatTimestamp } from '../lib/dates'
 import Icon from './Icon'
@@ -226,5 +227,31 @@ export function ChoiceGroup({ label, example, options, value, onChange, multiple
       </div>
       {example && <p className="hint">{example}</p>}
     </fieldset>
+  )
+}
+
+/** "Copy and paste into your preferred content-generating app." with a Copy button. */
+export function CopyForApp({ text, label = 'Copy' }) {
+  const [state, setState] = useState(null) // copied | error
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setState('copied')
+    } catch {
+      setState('error')
+    }
+    setTimeout(() => setState(null), 2000)
+  }
+  return (
+    <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+      <p className="text-[13px] text-muted">
+        {state === 'error'
+          ? "We couldn't copy. Your browser may have blocked it."
+          : 'Copy and paste into your preferred content-generating app.'}
+      </p>
+      <button type="button" className="btn-ghost min-h-10 px-3" onClick={copy}>
+        <Icon name={state === 'copied' ? 'check' : 'copy'} size={16} /> {state === 'copied' ? 'Copied' : label}
+      </button>
+    </div>
   )
 }

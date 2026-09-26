@@ -20,7 +20,7 @@ export function AuthShell({ children }) {
       <aside className="flex flex-col justify-between gap-10 bg-header p-8 text-on-header sm:p-12">
         <Logo onDark size="lg" />
         <div className="max-w-md">
-          <h1 className="text-3xl leading-tight !text-on-header sm:text-4xl">One brief in. One editable marketing plan out.</h1>
+          <h1 className="text-3xl leading-tight !text-on-header sm:text-4xl">One brief in. One marketing plan out.</h1>
           <p className="mt-4 text-base text-on-header-muted">
             Tell us about your business once, describe your campaign in a few lines, and get a week-by-week plan with
             posts, scripts and images for the channels you already use.

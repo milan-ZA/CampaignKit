@@ -4,7 +4,7 @@ import { downloadFile, slugify } from '../../lib/api'
 import { ASPECT_CLASS, channelInfo } from '../../lib/channels'
 import Icon from '../Icon'
 import Modal from '../Modal'
-import { InlineError, Spinner } from '../ui'
+import { CopyForApp, InlineError, Spinner } from '../ui'
 
 export default function ImagesSection({ item, images, job, businessName, onGenerate, onDeleteImage }) {
   const confirm = useConfirm()
@@ -78,37 +78,40 @@ export default function ImagesSection({ item, images, job, businessName, onGener
           </button>
         </>
       ) : images.length > 0 ? (
-        <ul className="mt-3 grid gap-3 sm:grid-cols-3 sm:gap-2">
-          {images.map((image, i) => (
-            <li key={image.id} className="flex flex-col gap-1.5">
-              <button
-                type="button"
-                onClick={() => setOpen(image)}
-                className={`${aspect} overflow-hidden rounded-lg border border-border bg-img-placeholder`}
-                aria-label={`Open image ${i + 1} full size`}
-              >
-                {image.url && <img src={image.url} alt="" className="size-full object-cover" loading="lazy" />}
-              </button>
-              <div className="flex items-center gap-1">
+        <>
+          <ul className="mt-3 grid gap-3 sm:grid-cols-3 sm:gap-2">
+            {images.map((image, i) => (
+              <li key={image.id} className="flex flex-col gap-1.5">
                 <button
                   type="button"
-                  className="btn-secondary min-h-11 flex-1 px-2 text-xs"
-                  onClick={() => download(image, i + 1)}
+                  onClick={() => setOpen(image)}
+                  className={`${aspect} overflow-hidden rounded-lg border border-border bg-img-placeholder`}
+                  aria-label={`Open image ${i + 1} full size`}
                 >
-                  <Icon name="download" size={16} /> Download
+                  {image.url && <img src={image.url} alt="" className="size-full object-cover" loading="lazy" />}
                 </button>
-                <button
-                  type="button"
-                  className="btn-icon hover:text-error"
-                  aria-label={`Delete image ${i + 1}`}
-                  onClick={() => remove(image)}
-                >
-                  <Icon name="trash" size={18} />
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="btn-secondary min-h-11 flex-1 px-2 text-xs"
+                    onClick={() => download(image, i + 1)}
+                  >
+                    <Icon name="download" size={16} /> Download
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-icon hover:text-error"
+                    aria-label={`Delete image ${i + 1}`}
+                    onClick={() => remove(image)}
+                  >
+                    <Icon name="trash" size={18} />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {images[0]?.prompt && <CopyForApp text={images[0].prompt} label="Copy image prompt" />}
+        </>
       ) : (
         <button type="button" className="btn-accent mt-3" onClick={onGenerate}>
           <Icon name="image" size={16} /> Generate 3 images

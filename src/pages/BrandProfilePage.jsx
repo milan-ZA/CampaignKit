@@ -25,7 +25,7 @@ const LINE_MAX = 120
 const TABS = [
   { key: 'about', label: 'About you' },
   { key: 'business', label: 'Your business' },
-  { key: 'voice', label: 'Brand voice' },
+  { key: 'voice', label: 'Brand guidelines' },
   { key: 'channels', label: 'Channels' },
 ]
 
