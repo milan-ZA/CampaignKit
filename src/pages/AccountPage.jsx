@@ -99,10 +99,12 @@ function PasswordForm() {
         </div>
       </div>
 
-      <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm text-body">
-        <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} className="size-4 accent-(--c-link)" />
-        Show passwords
-      </label>
+      <div>
+        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm text-body">
+          <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} className="size-4 accent-(--c-link)" />
+          Show passwords
+        </label>
+      </div>
 
       {error && <InlineError message={error} />}
       {done && (
