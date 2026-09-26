@@ -11,13 +11,14 @@ import {
   formatSavedAt,
   LoadingState,
   SaveStatus,
+  InlineError,
   Spinner,
   ToneChips,
 } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { useBrand } from '../context/BrandContext'
-import { useConfirm } from '../context/ConfirmContext'
 import { CHANNEL_INFO, CHANNELS, EMOJI_OPTIONS, LANGUAGE_ROWS, PRICE_LEVELS, TONE_WORDS, VISUAL_STYLES } from '../lib/channels'
+import { DEMO_PROFILE, PROFILE_FIELDS, profileHasData, useRemoveDemo } from '../lib/demo'
 import { supabase } from '../lib/supabase'
 
 const TEXT_MAX = 500
@@ -105,31 +106,7 @@ const VOICE_TEXT_FIELDS = {
   brand_colours: { label: 'Brand colours', example: 'Example: warm orange and cream' },
 }
 
-const DEMO_PROFILE = {
-  owner_name: 'Thandi Mokoena',
-  owner_story: 'I grew up baking with my gran and wanted a place where neighbours meet over good bread.',
-  owner_values: 'Fresh ingredients, local suppliers, no shortcuts.',
-  owner_personality: 'Warm, chatty, always remembers your order.',
-  owner_expertise: 'Slow-proved sourdough and hearty winter soups.',
-  business_name: 'Sunrise Bakery',
-  what_you_sell: 'Artisan bread, pastries, soups and coffee',
-  location: 'Parkhurst, Johannesburg',
-  customers: 'Office workers and young families nearby',
-  what_makes_you_different: 'Everything baked on site before 6am',
-  price_level: 'Mid-range',
-  website: null,
-  preferred_language: 'English',
-  tone_words: ['Warm', 'Friendly', 'Down-to-earth'],
-  words_to_use: 'fresh, from our oven, neighbours',
-  words_to_avoid: 'cheap, deal of the century',
-  emoji_use: 'A few',
-  example_post: null,
-  visual_style: 'Photo',
-  brand_colours: 'warm orange, cream and dark brown',
-  channels: ['Instagram', 'Facebook', 'WhatsApp', 'Google Business Profile'],
-}
-
-const FIELD_KEYS = Object.keys(DEMO_PROFILE)
+const FIELD_KEYS = PROFILE_FIELDS
 
 /** Adds https:// when missing. Returns null for an empty value and false when it isn't a web address. */
 function normaliseWebsite(v) {
@@ -179,7 +156,6 @@ function toForm(profile) {
 export default function BrandProfilePage() {
   const { user } = useAuth()
   const { profile, setProfile, loading, error: loadError, reload } = useBrand()
-  const confirm = useConfirm()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const tab = TABS.some((t) => t.key === params.get('tab')) ? params.get('tab') : 'about'
@@ -352,20 +328,31 @@ export default function BrandProfilePage() {
     saveField('website', v ?? '')
   }
 
+  // "Use demo profile" is only offered before anything is saved; "Remove demo" while the demo is loaded.
+  const isDemo = !!profile?.is_demo
+  const canUseDemo = !isDemo && !profileHasData(profile)
+  const { removeDemo, busy: removingDemo, error: removeDemoError } = useRemoveDemo()
+
   const applyDemo = async () => {
-    const hasData = !!profile || FIELD_KEYS.some((k) => filled(form[k]))
-    if (
-      hasData &&
-      !(await confirm({
-        title: 'Replace your saved brand profile with the demo?',
-        message: 'Everything on all four tabs will be replaced with the Sunrise Bakery example.',
-        confirmLabel: 'Use demo profile',
-      }))
-    ) {
-      return
-    }
     setForm(toForm(DEMO_PROFILE))
-    persist({ ...DEMO_PROFILE })
+    if (await persist({ ...DEMO_PROFILE, is_demo: true })) {
+      navigate('/', { state: { brandSaved: 'demo' } })
+    }
+  }
+
+  /** After "Remove demo": empty form, and the first-time step-by-step Save flow starts again on About you. */
+  const onRemoveDemo = async (opts) => {
+    if (!(await removeDemo(opts))) return
+    const empty = toForm(null)
+    saved.current = empty
+    pending.current = {}
+    unsaved.current = {}
+    setForm(empty)
+    setTouched({})
+    setStatus(null)
+    setWebsiteError(null)
+    setFirstTime(true)
+    goToTab('about')
   }
 
   const doneCount = useMemo(() => TABS.filter((t) => SECTION_DONE[t.key](form)).length, [form])
@@ -407,10 +394,24 @@ export default function BrandProfilePage() {
           <h1 className="text-3xl">Your brand profile</h1>
           <p className="mt-1 text-body">We use this in every plan, post and image we create for you.</p>
         </div>
-        <button type="button" className="btn-secondary" onClick={applyDemo}>
-          Use demo profile
-        </button>
+        {canUseDemo && (
+          <button type="button" className="btn-secondary" onClick={applyDemo} disabled={status === 'saving'}>
+            Use demo profile
+          </button>
+        )}
+        {isDemo && (
+          <button type="button" className="btn-danger" onClick={() => onRemoveDemo()} disabled={removingDemo}>
+            {removingDemo ? <Spinner size={16} /> : <Icon name="trash" size={16} />}
+            {removingDemo ? 'Removing…' : 'Remove demo'}
+          </button>
+        )}
       </div>
+
+      {removeDemoError && (
+        <div className="mt-4">
+          <InlineError message={removeDemoError} onRetry={() => onRemoveDemo({ skipConfirm: true })} />
+        </div>
+      )}
 
       {profile && (
         <section className="card mt-6 p-5" aria-label="Your saved brand profile">
