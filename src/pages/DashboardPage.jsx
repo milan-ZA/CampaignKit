@@ -6,6 +6,7 @@ import { useBrand } from '../context/BrandContext'
 import { useConfirm } from '../context/ConfirmContext'
 import { deleteCampaign, describeDbError } from '../lib/api'
 import { formatTimestamp } from '../lib/dates'
+import { useRemoveDemo } from '../lib/demo'
 import { supabase } from '../lib/supabase'
 
 export default function DashboardPage() {
@@ -41,6 +42,12 @@ export default function DashboardPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  // "Remove demo": clear the demo, then start the real brand profile set-up on About you.
+  const { removeDemo, busy: removingDemo, error: removeDemoError } = useRemoveDemo()
+  const removeDemoAndSetUp = async (opts) => {
+    if (await removeDemo(opts)) navigate('/brand?tab=about')
+  }
 
   // Without a brand profile (with channels), "new campaign" buttons go to the profile instead.
   const newCampaignPath = ready ? '/campaigns/new' : '/brand'
@@ -83,7 +90,26 @@ export default function DashboardPage() {
           role="status"
         >
           <Icon name="check" size={18} />
-          {flash === 'first' ? 'Your brand profile is ready. Start your first campaign.' : 'Brand profile saved.'}
+          {flash === 'demo'
+            ? 'Demo profile loaded. Start a campaign to see how CampaignKit works.'
+            : flash === 'first'
+              ? 'Your brand profile is ready. Start your first campaign.'
+              : 'Brand profile saved.'}
+        </div>
+      )}
+
+      {!brandLoading && profile?.is_demo && (
+        <div className="mt-6 flex flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-sm sm:flex-row sm:items-center">
+          <p className="flex-1 font-medium text-heading">You're using demo data (Sunrise Bakery).</p>
+          <button type="button" className="btn-danger" onClick={removeDemoAndSetUp} disabled={removingDemo}>
+            {removingDemo ? <Spinner size={16} /> : <Icon name="trash" size={16} />}
+            {removingDemo ? 'Removing…' : 'Remove demo'}
+          </button>
+        </div>
+      )}
+      {removeDemoError && (
+        <div className="mt-3">
+          <InlineError message={removeDemoError} onRetry={() => removeDemoAndSetUp({ skipConfirm: true })} />
         </div>
       )}
 

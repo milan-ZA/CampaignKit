@@ -13,6 +13,7 @@ CampaignKit helps small business owners with no marketing team. You set up your 
 ## What it does
 
 - **Brand profile, saved to your account:** about you, your business (including website and logo), brand guidelines (tone, words to use and avoid, emojis, image style, colours, content language) and your marketing channels.
+- **Try it with a demo:** new users can press "Use demo profile" to load the Sunrise Bakery example (marked with `brand_profiles.is_demo`). "Remove demo" clears it again and deletes only the campaigns made with it (found through `campaigns.brand_snapshot->>'is_demo'`).
 - **Campaign plans:** a brief turns into a week-by-week plan (1 to 12 weeks, 2 to 3 posts a week) that only uses the channels you pick.
 - **Editable posts:** change the date, channel, idea and copy. Every change saves automatically.
 - **AI extras per post:** a 15 to 30-second ad script, a creative brief for a designer, and 3 images sized for the channel.
