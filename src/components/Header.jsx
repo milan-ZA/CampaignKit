@@ -6,8 +6,8 @@ import Icon from './Icon'
 import { Logo } from './ui'
 
 const TABS = [
-  { to: '/', label: 'Campaigns', match: (p) => p === '/' || p.startsWith('/campaigns') },
   { to: '/brand', label: 'Brand profile', match: (p) => p.startsWith('/brand') },
+  { to: '/', label: 'Campaigns', match: (p) => p === '/' || p.startsWith('/campaigns') },
 ]
 
 export default function Header() {
