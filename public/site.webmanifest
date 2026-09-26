@@ -1,7 +1,7 @@
 {
   "name": "CampaignKit",
   "short_name": "CampaignKit",
-  "description": "One brief in. One editable marketing plan out.",
+  "description": "One brief in. One marketing plan out.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F8FAFC",

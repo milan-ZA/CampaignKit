@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useConfirm } from '../../context/ConfirmContext'
 import Icon from '../Icon'
-import { InlineError, Spinner } from '../ui'
+import { CopyForApp, InlineError, Spinner } from '../ui'
 
 /** Creative brief / Ad script: shows saved text with Regenerate, or a Generate button when empty. */
 export default function AssetSection({ title, description, text, onGenerate }) {
@@ -47,9 +47,12 @@ export default function AssetSection({ title, description, text, onGenerate }) {
           <Spinner size={16} /> Writing your {title.toLowerCase()}…
         </p>
       ) : text ? (
-        <div className="mt-3 rounded-lg border border-border bg-week p-3 text-sm leading-relaxed break-words whitespace-pre-wrap text-body">
-          {text}
-        </div>
+        <>
+          <div className="mt-3 rounded-lg border border-border bg-week p-3 text-sm leading-relaxed break-words whitespace-pre-wrap text-body">
+            {text}
+          </div>
+          <CopyForApp text={text} />
+        </>
       ) : (
         <button type="button" className="btn-accent mt-3" onClick={run}>
           <Icon name="sparkle" size={16} /> Generate

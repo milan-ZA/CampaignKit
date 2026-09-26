@@ -6,8 +6,9 @@ import PostCard from '../components/plan/PostCard'
 import PostPreview from '../components/plan/PostPreview'
 import { ChannelPill, ErrorState, InlineError, LoadingState, Spinner } from '../components/ui'
 import { useBrand } from '../context/BrandContext'
-import { callFunction, deleteItem, describeDbError, loadImagesForItems, removeImageFiles } from '../lib/api'
+import { callFunction, deleteItem, describeDbError, loadImagesForItems, removeImageFiles, slugify } from '../lib/api'
 import { addDays, formatDate, formatRange, weekForDate, weekRange } from '../lib/dates'
+import { campaignRows, saveBlob, toCsv, toXlsx, zipCampaignImages } from '../lib/exportCampaign'
 import { supabase } from '../lib/supabase'
 
 const EDITABLE = ['post_date', 'channel', 'content_idea', 'copy']
@@ -51,6 +52,9 @@ export default function CampaignPlanPage() {
   const [boardError, setBoardError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [zipProgress, setZipProgress] = useState(null) // { done, total } while the ZIP is being built
+  const exportMenuRef = useRef(null)
 
   const itemsRef = useRef(items)
   itemsRef.current = items
@@ -225,6 +229,56 @@ export default function CampaignPlanPage() {
     }
   }
 
+  // ---- Export -----------------------------------------------------------------
+
+  // Close the export menu on an outside click or Escape.
+  useEffect(() => {
+    if (!exportOpen) return
+    const onDown = (e) => {
+      if (!exportMenuRef.current?.contains(e.target)) setExportOpen(false)
+    }
+    const onKey = (e) => e.key === 'Escape' && setExportOpen(false)
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [exportOpen])
+
+  const exportCampaign = (format) => {
+    setExportOpen(false)
+    setBoardError(null)
+    try {
+      const rows = campaignRows(sorted, images)
+      const name = `${slugify(campaign.name)}-campaign`
+      if (format === 'xlsx') saveBlob(toXlsx(rows), `${name}.xlsx`)
+      else saveBlob(toCsv(rows), `${name}.csv`)
+    } catch (err) {
+      console.error(err)
+      setBoardError({ message: "We couldn't export the campaign.", retry: () => exportCampaign(format) })
+    }
+  }
+
+  const downloadAssets = async () => {
+    if (zipProgress) return
+    setBoardError(null)
+    setZipProgress({ done: 0, total: 0 })
+    try {
+      const blob = await zipCampaignImages(sorted, (done, total) => setZipProgress({ done, total }))
+      if (!blob) {
+        setBoardError({ message: 'There are no images to download yet. Open a post and press Generate 3 images first.' })
+      } else {
+        saveBlob(blob, `${slugify(campaign.name)}-assets.zip`)
+      }
+    } catch (err) {
+      console.error(err)
+      setBoardError({ message: "We couldn't download the images. Please try again.", retry: downloadAssets })
+    } finally {
+      setZipProgress(null)
+    }
+  }
+
   // ---- Render ----------------------------------------------------------------
 
   if (loadState === 'loading') return <LoadingState message="Loading your plan…" />
@@ -263,9 +317,54 @@ export default function CampaignPlanPage() {
           </Link>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <h1 className="min-w-0 flex-1 text-2xl break-words sm:text-[28px]">{campaign.name}</h1>
-            <button type="button" className="btn-secondary" onClick={copyPlan}>
-              <Icon name={copied ? 'check' : 'copy'} size={18} /> {copied ? 'Copied' : 'Copy plan'}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className="btn-secondary" onClick={copyPlan}>
+                <Icon name={copied ? 'check' : 'copy'} size={18} /> {copied ? 'Copied' : 'Copy plan'}
+              </button>
+              <div className="relative" ref={exportMenuRef}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  aria-haspopup="menu"
+                  aria-expanded={exportOpen}
+                  onClick={() => setExportOpen((o) => !o)}
+                >
+                  <Icon name="download" size={18} /> Export campaign
+                </button>
+                {exportOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 z-30 mt-1 w-60 overflow-hidden rounded-xl border border-border bg-surface py-1 shadow-pop"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex min-h-11 w-full flex-col items-start px-4 py-2 text-left hover:bg-week"
+                      onClick={() => exportCampaign('xlsx')}
+                    >
+                      <span className="text-sm font-semibold text-heading">Excel (.xlsx)</span>
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex min-h-11 w-full flex-col items-start px-4 py-2 text-left hover:bg-week"
+                      onClick={() => exportCampaign('csv')}
+                    >
+                      <span className="text-sm font-semibold text-heading">Google Sheets (.csv)</span>
+                      <span className="text-xs text-muted">In Google Sheets: File &gt; Import</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button type="button" className="btn-secondary" onClick={downloadAssets} disabled={!!zipProgress}>
+                {zipProgress ? <Spinner size={16} /> : <Icon name="image" size={18} />}
+                {zipProgress
+                  ? zipProgress.total
+                    ? `Downloading ${zipProgress.done} of ${zipProgress.total}…`
+                    : 'Preparing…'
+                  : 'Download assets'}
+              </button>
+            </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="chip">
