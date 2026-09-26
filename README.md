@@ -2,85 +2,135 @@
 
 # CampaignKit
 
-Brand profile once → short campaign brief → AI-generated, editable week-by-week marketing plan with optional AI images.
+**One brief in. One marketing plan out.**
 
-React + Vite + Tailwind v4 front end; Supabase for auth, Postgres (RLS on every table), Storage and Edge Functions. OpenAI is called **only** from Edge Functions.
+CampaignKit helps small business owners with no marketing team. You set up your brand once, type a short campaign brief, and get an AI-generated, editable week-by-week marketing plan for the channels you actually use, with ad scripts, designer briefs and AI images for each post.
+
+> Course project (MVP). It runs on a shared Supabase project and will be taken down after the course.
+
+**Live app:** https://milan-za-campaign-ki-072t.bolt.host
+
+## What it does
+
+- **Brand profile, saved to your account:** about you, your business (including website and logo), brand guidelines (tone, words to use and avoid, emojis, image style, colours, content language) and your marketing channels.
+- **Campaign plans:** a brief turns into a week-by-week plan (1 to 12 weeks, 2 to 3 posts a week) that only uses the channels you pick.
+- **Editable posts:** change the date, channel, idea and copy. Every change saves automatically.
+- **AI extras per post:** a 15 to 30-second ad script, a creative brief for a designer, and 3 images sized for the channel.
+- **Previews:** see each post as it would look on Instagram, Facebook, TikTok, LinkedIn, WhatsApp, Email, Google Business Profile or an in-store poster, with a length check.
+- **Use it elsewhere:** copy any text for your preferred content app, export the campaign to Excel (.xlsx) or Google Sheets (.csv), and download all images as one ZIP, organised by week.
+- **Content language:** plans, copy, scripts and briefs can be written in English, Afrikaans, isiZulu, isiXhosa, Sesotho, Setswana, French or Portuguese.
+- Light and dark mode, and works on phones.
+
+## How it works
+
+```
+Claude Code / teammates ──push, pull request──► GitHub (main, protected)
+                                                  │
+                             ┌────────────────────┼─────────────────────┐
+                             ▼ automatic          ▼ automatic           ▼ by hand
+                   Check workflow        Deploy Supabase workflow     Bolt.new
+                   (build + type-check)  (database + AI functions)    (import + Publish)
+                                                  │                      │
+                                                  ▼                      ▼
+                     OpenAI ◄── AI requests ── Supabase ◄── login, data, images ── Live website ◄── users
+```
+
+| Part | Role | Updates |
+| --- | --- | --- |
+| **GitHub** | Single source of truth for the code | By pull request, reviewed and merged by the repo owner |
+| **Check workflow** | Builds the website and type-checks the Edge Functions on every push and pull request. Required to pass before merging. | Automatic |
+| **Supabase** | Login, database (brand profiles, campaigns, posts), private image storage, 3 AI functions | Automatic after a merge that changes `supabase/` |
+| **OpenAI** | Writes text and creates images. Called only by the Supabase functions; the key never reaches the browser. | Model names and key are set once in Supabase |
+| **Bolt.new** | Hosts the live website | By hand: bring in the latest code from GitHub, then Publish → Update |
+
+## Current setup
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| Text model (`OPENAI_MODEL`) | `gpt-4.1-mini` | Doesn't need a verified OpenAI organisation |
+| Image model (`OPENAI_IMAGE_MODEL`) | `dall-e-3` | Same. The code also supports `gpt-image-1` if the organisation is verified later. |
+| Supabase connection | Built into `src/lib/supabase.js` | The URL and anon key are public by design (Row Level Security protects the data). Bolt did not keep a `.env` file, so the app works without one. |
+| Email confirmation | Off | MVP: people can sign up and start straight away. Turn it on and add an email service before real users. |
+
+## Working on it as a team
+
+1. Ask the repo owner to add your GitHub account as a collaborator.
+2. Create a branch (for example `yourname/new-feature`), make your change and push it.
+3. Open a pull request. The **Check** workflow runs, and it must pass before merging.
+4. The repo owner reviews, approves and merges.
+5. After the merge, Supabase updates automatically. The owner updates the live site in Bolt.
+
+Rules:
+- **Database changes:** never edit a migration that has already run. Add a new file in `supabase/migrations/` with a later timestamp, for example `20261001090000_add_something.sql`.
+- **Secrets:** never commit keys or passwords. The OpenAI key lives only in Supabase, and deploy credentials live in GitHub repository secrets. (The Supabase anon key in the code is public by design.)
+- **Shared data:** everyone uses the same live database, so don't delete other people's test data.
+
+## Run it on your computer
+
+Needs Node 20 or newer.
+
+```bash
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. It connects to the shared Supabase project, so no `.env` file is needed.
 
 ## Deploy your own copy
 
-By default the app connects to the course project's shared Supabase project (public URL + anon key in `src/lib/supabase.js`), so a fresh copy works with no setup. To use your own Supabase project instead, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; they override the defaults. You need a Supabase project, an OpenAI API key and Node 20+.
+To use your own Supabase project instead of the shared one:
 
-1. **Supabase project**: create one at supabase.com (the free plan is fine). Note the project ref, the database password, and the URL and anon key under Project Settings → API.
-2. **Database, storage and functions** (from a clone of this repo):
+1. **Supabase project:** create one at supabase.com (the free plan is fine). Note the project ref, the database password, and the URL and anon key under Project Settings → API.
+2. **Database, storage and functions:**
    ```bash
-   npm install
    npx supabase login
    npx supabase link --project-ref YOUR-PROJECT-REF
    npx supabase db push
    npx supabase functions deploy
-   npx supabase secrets set OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-5-mini OPENAI_IMAGE_MODEL=gpt-image-1
+   npx supabase secrets set OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-4.1-mini OPENAI_IMAGE_MODEL=dall-e-3
    ```
-   If you forked the repo, you can instead add the three repository secrets listed under Deployment and run the "Deploy Supabase" workflow.
-3. **Auth URLs**: in Supabase → Authentication → URL Configuration, set the Site URL to where the app runs and add it (plus `http://localhost:5173/**`) to Redirect URLs.
-4. **Website**:
-   - Locally: copy `.env.example` to `.env.local`, fill in the URL and anon key, then run `npm run dev`.
-   - On a host (Bolt, Netlify, Vercel): set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as environment variables. Build command `npm run build`, output folder `dist`. Redeploy after changing them.
+   If you forked the repo, you can instead add the three repository secrets below and run the **Deploy Supabase** workflow from the Actions tab.
+3. **Auth URLs:** in Supabase → Authentication → URL Configuration, set the Site URL to where the app runs, and add it plus `http://localhost:5173/**` to Redirect URLs.
+4. **Point the website at your project:** set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Locally, copy `.env.example` to `.env.local`. On a host (Bolt, Netlify, Vercel), use environment variables; the build command is `npm run build` and the output folder is `dist`. These override the built-in defaults.
 
 | Message you see | What's missing |
 | --- | --- |
-| "CampaignKit needs its Supabase settings" | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (step 4) |
+| "CampaignKit needs its Supabase settings" | The Supabase URL and anon key (step 4) |
 | "This Supabase project isn't set up yet: the database tables are missing" | `supabase db push` (step 2) |
 | "The AI feature … isn't set up on this Supabase project yet" | `supabase functions deploy` (step 2) |
-| "The AI service is not set up yet" | the OpenAI secrets (step 2) |
-| Confirmation email link opens the wrong address | Auth URLs (step 3) |
+| "The AI service is not set up yet" | The OpenAI secrets (step 2) |
+| "The AI model … needs a verified OpenAI organisation" | Verify the organisation, or use `gpt-4.1-mini` and `dall-e-3` |
+| Confirmation or reset email opens the wrong address | Auth URLs (step 3) |
 
-## Deployment
+## Automation
 
-- **Backend (Supabase):** `.github/workflows/deploy-supabase.yml` runs on every push to `main` that touches `supabase/`, and can also be run by hand from the Actions tab. It applies migrations and deploys the Edge Functions. It needs the repository secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_ID`. Until those exist it skips with a warning.
-- **Website:** any static host that builds from GitHub (for example Bolt.new, Netlify or Vercel). Build command `npm run build`, output folder `dist`, and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. `public/_redirects` sends every path to `index.html` so page refreshes work.
-- **Image model:** `OPENAI_IMAGE_MODEL` can be `gpt-image-1` (needs a verified OpenAI organisation) or `dall-e-3` (3 separate requests, sizes 1024x1024 / 1792x1024 / 1024x1792).
-- **OpenAI secrets** live only in Supabase: `npx supabase secrets set OPENAI_API_KEY=... OPENAI_MODEL=... OPENAI_IMAGE_MODEL=...`
-- `.github/workflows/check.yml` builds the site and type-checks the Edge Functions on every push.
+- `.github/workflows/check.yml`: builds the site and type-checks the Edge Functions on every push and pull request. Both jobs (`web`, `functions`) are required to merge into `main`.
+- `.github/workflows/deploy-supabase.yml`: on every merge to `main` that touches `supabase/` (or by hand from the Actions tab), applies new migrations and deploys the Edge Functions. It needs the repository secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_ID`, and skips with a warning if they're missing.
+- `public/_redirects`: sends every path to `index.html`, so refreshing any page works on the host.
 
-## Local setup
-
-1. **Front-end env**: copy `.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (Supabase → Project Settings → API).
-
-2. **Database + Storage**: run `supabase/migrations/20260925000000_campaignkit.sql`. Either paste it into the SQL editor, or:
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref YOUR-PROJECT-REF
-   npx supabase db push
-   ```
-   This creates the tables, RLS policies, the two transactional RPCs, the private `post-images` bucket and its folder-scoped Storage policies.
-
-3. **Secrets** (server side only):
-   ```bash
-   npx supabase secrets set OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-5-mini OPENAI_IMAGE_MODEL=gpt-image-1
-   ```
-
-4. **Edge Functions**:
-   ```bash
-   npx supabase functions deploy generate-plan generate-asset generate-images
-   ```
-
-5. **Auth URLs**: in Supabase → Authentication → URL Configuration, set the Site URL to your app URL and add `http://localhost:5173/**` to the redirect URLs (needed for email confirmation and password reset links).
-
-6. Run it:
-   ```bash
-   npm install
-   npm run dev
-   ```
-
-## How it fits together
+## Code map
 
 | Piece | Where |
 | --- | --- |
 | Theme tokens (light/dark, channel pills, preview frames) | `src/index.css` (the default Tailwind palette is disabled, so every colour comes from a token) |
-| Channel list, hints, image sizes, "see first"/limit numbers | `src/lib/channels.js` and `supabase/functions/_shared/brand.ts` |
+| Channel list, hints, image sizes, "see first" and length limits, languages | `src/lib/channels.js` and `supabase/functions/_shared/brand.ts` |
 | Brand context sent with every OpenAI request | `supabase/functions/_shared/brand.ts` → `buildBrandContext` |
-| Campaign + posts saved all-or-nothing | RPC `create_campaign_with_items` |
+| AI functions | `supabase/functions/generate-plan`, `generate-asset`, `generate-images` |
+| Campaign and posts saved all-or-nothing | RPC `create_campaign_with_items` |
 | Image swap (new rows in, old rows out, in one transaction) | RPC `replace_item_images`; old files are removed only after that succeeds |
 | Post previews (8 channel layouts) | `src/components/plan/PostPreview.jsx` |
+| Excel/CSV export and image ZIP | `src/lib/exportCampaign.js` (runs in the browser) |
+| Logo upload | `src/components/LogoUpload.jsx` (stored under `{user_id}/brand/` in the private `post-images` bucket) |
+| Database schema and security rules | `supabase/migrations/` |
 
-Edge Functions create their Supabase client with the caller's JWT and the anon key, so RLS applies to every query and every Storage action. They always read the brand profile from the database, never from the request. `generate-plan` also stores a `brand_snapshot` copy of the profile on each new campaign.
+**Security:**
+- Every table uses Row Level Security, and each user can only read and change their own rows and files.
+- Edge Functions act as the logged-in user (the caller's token plus the anon key), so the same rules apply to every query and file.
+- The functions always read the brand profile from the database, never from the request. `generate-plan` also stores a `brand_snapshot` copy of the profile on each new campaign.
+
+## After the course
+
+1. Delete the Supabase project (Project Settings → General).
+2. Revoke the OpenAI API key and the Supabase access token.
+3. Unpublish and delete the Bolt project.
+4. Archive or delete this repository.
