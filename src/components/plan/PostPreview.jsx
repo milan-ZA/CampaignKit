@@ -369,7 +369,7 @@ function GoogleBusinessLayout({ name, copy, media }) {
       </div>
       {media({ shape: 'wide' })}
       <div className="px-4 pt-3 text-sm leading-[1.5]">
-        <ClampText text={copy} lines={4} />
+        <ClampText text={copy} lines={4} moreLabel="… more" />
       </div>
       <div className="px-4 pt-3 pb-4">
         <span className="inline-block rounded-full border border-pv-divider px-4 py-2 text-sm font-semibold text-link">
