@@ -53,8 +53,10 @@ export function buildBrandContext(p: BrandProfile): string {
     ['Customers', p.customers],
     ['What makes them different', p.what_makes_you_different],
     ['Price level', p.price_level],
+    ['Website', p.website],
   ])
   const voice = section('BRAND VOICE', [
+    ['Language', p.preferred_language],
     ['Tone', p.tone_words],
     ['Words and phrases they like to use', p.words_to_use],
     ['Words they never use', p.words_to_avoid],
@@ -64,6 +66,12 @@ export function buildBrandContext(p: BrandProfile): string {
   ])
 
   const rules: string[] = []
+  const language = filled(p.preferred_language)
+  if (language && language !== 'English') {
+    rules.push(
+      `Write ALL text for the owner (content ideas, post copy, ad scripts and creative briefs) in ${language}. Keep the JSON keys and the channel names in English.`,
+    )
+  }
   const tone = filled(p.tone_words)
   if (tone) rules.push(`Write in a tone that is ${tone}.`)
   if (filled(p.words_to_use)) rules.push(`Use these words and phrases where they fit naturally: ${filled(p.words_to_use)}.`)
