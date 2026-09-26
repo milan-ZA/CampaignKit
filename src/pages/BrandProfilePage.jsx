@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useBlocker, useSearchParams } from 'react-router-dom'
+import { useBlocker, useNavigate, useSearchParams } from 'react-router-dom'
 import Icon from '../components/Icon'
 import LogoUpload from '../components/LogoUpload'
 import Modal from '../components/Modal'
@@ -17,7 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useBrand } from '../context/BrandContext'
 import { useConfirm } from '../context/ConfirmContext'
-import { CHANNEL_INFO, CHANNELS, EMOJI_OPTIONS, LANGUAGES, PRICE_LEVELS, TONE_WORDS, VISUAL_STYLES } from '../lib/channels'
+import { CHANNEL_INFO, CHANNELS, EMOJI_OPTIONS, LANGUAGE_ROWS, PRICE_LEVELS, TONE_WORDS, VISUAL_STYLES } from '../lib/channels'
 import { supabase } from '../lib/supabase'
 
 const TEXT_MAX = 500
@@ -154,6 +154,15 @@ const SECTION_DONE = {
   channels: (f) => filled(f.channels),
 }
 
+const allDone = (f) => TABS.every((t) => SECTION_DONE[t.key](f))
+
+// Required fields per tab. Save stays on the tab (and shows what is missing) until these are filled.
+const REQUIRED = {
+  business: ['business_name', 'what_you_sell'],
+  channels: ['channels'],
+}
+const missingOn = (tabKey, f) => (REQUIRED[tabKey] ?? []).filter((k) => !filled(f[k]))
+
 // Text is stored trimmed; empty text becomes null.
 const normalise = (v) => (typeof v === 'string' ? v.trim() || null : v)
 const same = (a, b) => JSON.stringify(normalise(a) ?? null) === JSON.stringify(normalise(b) ?? null)
@@ -171,6 +180,7 @@ export default function BrandProfilePage() {
   const { user } = useAuth()
   const { profile, setProfile, loading, error: loadError, reload } = useBrand()
   const confirm = useConfirm()
+  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const tab = TABS.some((t) => t.key === params.get('tab')) ? params.get('tab') : 'about'
 
@@ -183,6 +193,9 @@ export default function BrandProfilePage() {
   const unsaved = useRef({}) // fields whose last save failed
   const queue = useRef(Promise.resolve(true))
   const hydrated = useRef(!loading)
+  // First time = the profile wasn't complete when this page opened. Then Save walks the user
+  // tab by tab (About > Business > Brand guidelines > Channels > Campaigns). Otherwise Save goes to Campaigns.
+  const [firstTime, setFirstTime] = useState(() => !loading && !allDone(toForm(profile)))
   const formRef = useRef(form)
   formRef.current = form
 
@@ -192,6 +205,7 @@ export default function BrandProfilePage() {
       hydrated.current = true
       setForm(toForm(profile))
       saved.current = toForm(profile)
+      setFirstTime(!allDone(toForm(profile)))
     }
   }, [loading, profile])
 
@@ -253,6 +267,45 @@ export default function BrandProfilePage() {
     }
     return persist(all)
   }
+
+  const goToTab = (key) => {
+    setParams({ tab: key }, { replace: true })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  /** The Save button at the bottom of each tab: save everything, then move on. */
+  const continuing = useRef(false)
+  const saveAndContinue = async () => {
+    if (continuing.current) return
+    continuing.current = true
+    try {
+      await saveAndMoveOn()
+    } finally {
+      continuing.current = false
+    }
+  }
+  const saveAndMoveOn = async () => {
+    if (!(await saveAll())) return // the save bar shows the error and a retry
+    const f = formRef.current
+    const missingHere = missingOn(tab, f)
+    if (missingHere.length) {
+      // Stay and point at what is missing.
+      setTouched((t) => ({ ...t, ...Object.fromEntries(missingHere.map((k) => [k, true])) }))
+      return
+    }
+    const idx = TABS.findIndex((t) => t.key === tab)
+    if (firstTime && idx < TABS.length - 1) return goToTab(TABS[idx + 1].key)
+    // Last step, or a returning user: required info elsewhere still missing? Send them there first.
+    const gap = TABS.find((t) => missingOn(t.key, f).length)
+    if (gap) {
+      setTouched((t) => ({ ...t, ...Object.fromEntries(missingOn(gap.key, f).map((k) => [k, true])) }))
+      return goToTab(gap.key)
+    }
+    navigate('/', { state: { brandSaved: firstTime ? 'first' : 'update' } })
+  }
+
+  const isLastStep = tab === TABS[TABS.length - 1].key
+  const saveLabel = !firstTime ? 'Save brand profile' : isLastStep ? 'Save and finish' : 'Save and continue'
 
   // Warn before leaving with unsaved changes: in-app navigation…
   const blocker = useBlocker(
@@ -458,16 +511,6 @@ export default function BrandProfilePage() {
           <>
             {textField(BUSINESS_FIELDS[0])}
             {requiredError('business_name', 'Please add your business name.')}
-            {textField(BUSINESS_FIELDS[1])}
-            {requiredError('what_you_sell', 'Please tell us what you sell.')}
-            {BUSINESS_FIELDS.slice(2).map(textField)}
-            <ChoiceGroup
-              label="Price level"
-              example="How your prices compare with similar businesses nearby."
-              options={PRICE_LEVELS}
-              value={form.price_level}
-              onChange={setAndSave('price_level')}
-            />
             <Field
               id="website"
               label="Your website"
@@ -485,6 +528,16 @@ export default function BrandProfilePage() {
             />
             {websiteError && <p className="-mt-3 text-sm font-medium text-error">{websiteError}</p>}
             <LogoUpload userId={user.id} path={profile?.logo_path ?? null} onSave={(logo_path) => persist({ logo_path })} />
+            {textField(BUSINESS_FIELDS[1])}
+            {requiredError('what_you_sell', 'Please tell us what you sell.')}
+            {BUSINESS_FIELDS.slice(2).map(textField)}
+            <ChoiceGroup
+              label="Price level"
+              example="How your prices compare with similar businesses nearby."
+              options={PRICE_LEVELS}
+              value={form.price_level}
+              onChange={setAndSave('price_level')}
+            />
           </>
         )}
 
@@ -493,7 +546,12 @@ export default function BrandProfilePage() {
             <ChoiceGroup
               label="Language for your content"
               example="We write your plans, posts, ad scripts and creative briefs in this language."
-              options={LANGUAGES}
+              rows={LANGUAGE_ROWS}
+              after={
+                <span className="inline-flex min-h-11 items-center rounded-full border border-dashed border-input px-4 text-sm font-semibold text-muted">
+                  Others coming soon
+                </span>
+              }
               value={form.preferred_language || 'English'}
               onChange={setAndSave('preferred_language')}
             />
@@ -581,9 +639,11 @@ export default function BrandProfilePage() {
               </span>
             ) : null}
           </p>
-          <button type="button" className="btn-accent" onClick={saveAll} disabled={status === 'saving'}>
+          {/* Not disabled while saving: clicking Save straight after typing first blurs the field, which starts
+              a save; a disabled button would swallow that click. Saves queue in order, and a ref stops double clicks. */}
+          <button type="button" className="btn-accent" onClick={saveAndContinue} aria-busy={status === 'saving'}>
             {status === 'saving' ? <Spinner size={16} /> : <Icon name="check" size={18} />}
-            Save brand profile
+            {saveLabel}
           </button>
         </div>
       </section>

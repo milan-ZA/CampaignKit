@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icon from '../components/Icon'
 import { ErrorState, InlineError, LoadingState, Spinner, ToneChips } from '../components/ui'
 import { useBrand } from '../context/BrandContext'
@@ -16,6 +16,16 @@ export default function DashboardPage() {
   const [error, setError] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
+
+  // A short confirmation after saving the brand profile. Clear the router state so a refresh doesn't show it again.
+  const location = useLocation()
+  const [flash, setFlash] = useState(location.state?.brandSaved ?? null)
+  useEffect(() => {
+    if (!location.state?.brandSaved) return
+    navigate('.', { replace: true, state: null })
+    const t = setTimeout(() => setFlash(null), 6000)
+    return () => clearTimeout(t)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const load = useCallback(async () => {
     setError(null)
@@ -66,6 +76,16 @@ export default function DashboardPage() {
           </button>
         )}
       </div>
+
+      {flash && (
+        <div
+          className="mt-6 flex items-center gap-2 rounded-xl border border-success bg-success-soft px-4 py-3 text-sm font-medium text-success"
+          role="status"
+        >
+          <Icon name="check" size={18} />
+          {flash === 'first' ? 'Your brand profile is ready. Start your first campaign.' : 'Brand profile saved.'}
+        </div>
+      )}
 
       {!brandLoading && !ready && (
         <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-link bg-link-soft p-5 sm:flex-row sm:items-center">
