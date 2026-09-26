@@ -1,6 +1,7 @@
 import { buildBrandContext, CHANNELS, hasChannels } from '../_shared/brand.ts'
 import { getUserClient, HttpError, json, readJson, serve, str } from '../_shared/http.ts'
 import { chatJson } from '../_shared/openai.ts'
+import { addValidItems, MAX_PER_WEEK, MIN_PER_WEEK, type PlanItem, sortPlan, type Week, weeksNeedingPosts } from './plan.ts'
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -80,54 +81,72 @@ You write ready-to-post content in the owner's own voice.
 
 ${buildBrandContext(profile)}`
 
-  const userPrompt = `Create a week-by-week marketing plan for this campaign.
-
-CAMPAIGN
+  const campaignFacts = `CAMPAIGN
 - Name: ${name}
 - What it is about: ${business_brief}
 - Who we want to reach: ${target_audience}
 - What we want to achieve: ${goal}
-- Channels to use: ${channels.join(', ')}
+- Channels to use: ${channels.join(', ')}`
 
-WEEKS
-${weeks.map((w) => `- Week ${w.week_number}: ${w.from} to ${w.to}`).join('\n')}
-
-RULES
-- Plan 2 to 3 posts for every week.
+  const rules = `RULES
 - Use ONLY these channels: ${channels.join(', ')}. Use the channel names exactly as written.
 - Spread the posts across these channels in the way that best reaches the audience described above.
 - Each post_date must fall inside its week (from and to dates above, inclusive) and use the format YYYY-MM-DD.
 - "content_idea" is a short title for the post (under 12 words).
 - "copy" is the finished text the owner can post as-is, written for that channel (for Email: the email body; for In-store: poster wording; for WhatsApp: a short friendly message).
-- Build the story across the weeks: introduce, remind, create urgency, say thank you.
 
 Reply with JSON only, in exactly this shape:
 {"items":[{"week_number":1,"post_date":"YYYY-MM-DD","channel":"${channels[0]}","content_idea":"...","copy":"..."}]}`
 
-  const result = await chatJson([
-    { role: 'system', content: system },
-    { role: 'user', content: userPrompt },
-  ])
+  const weekList = (list: Week[]) => list.map((w) => `- Week ${w.week_number}: ${w.from} to ${w.to}`).join('\n')
 
-  // ---- Validate every item; drop invalid ones -------------------------------
-  const channelByLower = new Map(channels.map((c) => [c.toLowerCase(), c]))
-  const perWeek = new Map<number, number>()
-  const items: Record<string, unknown>[] = []
+  const ask = (content: string) =>
+    chatJson([
+      { role: 'system', content: system },
+      { role: 'user', content },
+    ])
 
-  for (const raw of Array.isArray(result?.items) ? result.items : []) {
-    const week_number = Number(raw?.week_number)
-    const week = weeks.find((w) => w.week_number === week_number)
-    const post_date = str(raw?.post_date)
-    const channel = channelByLower.get(str(raw?.channel).toLowerCase())
-    const content_idea = str(raw?.content_idea)
-    const copy = str(raw?.copy)
+  // First request: the whole plan. Say exactly how many posts are needed, so no week is skipped.
+  const first = await ask(`Create a week-by-week marketing plan for this campaign.
 
-    if (!week || !channel || !content_idea || !copy) continue
-    if (parseDate(post_date) === null || post_date < week.from || post_date > week.to) continue
-    if ((perWeek.get(week_number) ?? 0) >= 3) continue
+${campaignFacts}
 
-    perWeek.set(week_number, (perWeek.get(week_number) ?? 0) + 1)
-    items.push({ week_number, post_date, channel, content_idea: content_idea.slice(0, 300), copy: copy.slice(0, 5000) })
+WEEKS (${weeks.length} in total)
+${weekList(weeks)}
+
+${rules}
+- Plan ${MIN_PER_WEEK} to ${MAX_PER_WEEK} posts for EVERY one of the ${weeks.length} weeks above. Do not skip any week.
+- The "items" list must contain between ${weeks.length * MIN_PER_WEEK} and ${weeks.length * MAX_PER_WEEK} posts in total.
+- Build the story across the weeks: introduce, remind, create urgency, say thank you.`)
+
+  const items: PlanItem[] = []
+  addValidItems(first?.items, weeks, channels, items)
+
+  // Top-up: if any week still has too few posts, ask once more for just those weeks.
+  const shortWeeks = weeksNeedingPosts(items, weeks)
+  if (shortWeeks.length) {
+    console.warn(`Plan short for weeks ${shortWeeks.map((w) => w.week_number).join(', ')}; asking for a top-up`)
+    const planned = sortPlan(items).map((i) => `- ${i.post_date} ${i.channel}: ${i.content_idea}`).join('\n') || '- (none yet)'
+    try {
+      const topUp = await ask(`We are building a week-by-week marketing plan. Some weeks still need posts.
+
+${campaignFacts}
+
+ALREADY PLANNED (do not repeat these ideas)
+${planned}
+
+WEEKS THAT STILL NEED POSTS
+${weekList(shortWeeks)}
+
+${rules}
+- Plan ${MIN_PER_WEEK} to ${MAX_PER_WEEK} posts for EACH of the weeks listed above, and only for those weeks.`)
+      addValidItems(topUp?.items, weeks, channels, items)
+    } catch (err) {
+      // Keep what we have; a shorter plan is better than no plan.
+      console.error('Top-up request failed', err)
+    }
+    const stillMissing = weeksNeedingPosts(items, weeks)
+    if (stillMissing.length) console.warn(`Still short for weeks ${stillMissing.map((w) => w.week_number).join(', ')}`)
   }
 
   if (items.length === 0) {
@@ -139,7 +158,7 @@ Reply with JSON only, in exactly this shape:
   const { id: _profileId, user_id: _userId, ...brand_snapshot } = profile
   const { data: campaignId, error: saveError } = await supabase.rpc('create_campaign_with_items', {
     p_campaign: { name, business_brief, target_audience, goal, duration_weeks, start_date, channels, brand_snapshot },
-    p_items: items,
+    p_items: sortPlan(items),
   })
   if (saveError || !campaignId) {
     console.error(saveError)

@@ -28,3 +28,6 @@ jobs:
       - name: Type-check Edge Functions
         working-directory: supabase/functions
         run: deno check generate-plan/index.ts generate-asset/index.ts generate-images/index.ts delete-account/index.ts
+      - name: Test plan checking (every week gets posts)
+        working-directory: supabase/functions
+        run: deno test generate-plan/plan_test.ts
