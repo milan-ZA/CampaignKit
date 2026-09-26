@@ -28,17 +28,25 @@ export function ThemeProvider({ children }) {
     document.documentElement.classList.toggle('dark', theme === 'dark')
   }, [theme])
 
-  const toggle = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    setSaved(next)
+  /** 'light' | 'dark' | 'system' (follow the device). */
+  const setPreference = (next) => {
+    const value = next === 'system' ? null : next
+    setSaved(value)
     try {
-      localStorage.setItem(STORAGE_KEY, next)
+      if (value) localStorage.setItem(STORAGE_KEY, value)
+      else localStorage.removeItem(STORAGE_KEY)
     } catch {
       // Private mode: the choice still applies for this visit.
     }
   }
 
-  return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>
+  const toggle = () => setPreference(theme === 'dark' ? 'light' : 'dark')
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggle, preference: saved ?? 'system', setPreference }}>
+      {children}
+    </ThemeContext.Provider>
+  )
 }
 
 export const useTheme = () => useContext(ThemeContext)

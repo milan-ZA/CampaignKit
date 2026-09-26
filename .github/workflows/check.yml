@@ -27,4 +27,4 @@ jobs:
           deno-version: v2.x
       - name: Type-check Edge Functions
         working-directory: supabase/functions
-        run: deno check generate-plan/index.ts generate-asset/index.ts generate-images/index.ts
+        run: deno check generate-plan/index.ts generate-asset/index.ts generate-images/index.ts delete-account/index.ts
