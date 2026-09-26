@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useSearchParams } from 'react-router-dom'
 import Icon from '../components/Icon'
+import LogoUpload from '../components/LogoUpload'
 import Modal from '../components/Modal'
 import {
   ChannelPill,
@@ -16,7 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useBrand } from '../context/BrandContext'
 import { useConfirm } from '../context/ConfirmContext'
-import { CHANNEL_INFO, CHANNELS, EMOJI_OPTIONS, PRICE_LEVELS, TONE_WORDS, VISUAL_STYLES } from '../lib/channels'
+import { CHANNEL_INFO, CHANNELS, EMOJI_OPTIONS, LANGUAGES, PRICE_LEVELS, TONE_WORDS, VISUAL_STYLES } from '../lib/channels'
 import { supabase } from '../lib/supabase'
 
 const TEXT_MAX = 500
@@ -116,6 +117,8 @@ const DEMO_PROFILE = {
   customers: 'Office workers and young families nearby',
   what_makes_you_different: 'Everything baked on site before 6am',
   price_level: 'Mid-range',
+  website: null,
+  preferred_language: 'English',
   tone_words: ['Warm', 'Friendly', 'Down-to-earth'],
   words_to_use: 'fresh, from our oven, neighbours',
   words_to_avoid: 'cheap, deal of the century',
@@ -127,6 +130,20 @@ const DEMO_PROFILE = {
 }
 
 const FIELD_KEYS = Object.keys(DEMO_PROFILE)
+
+/** Adds https:// when missing. Returns null for an empty value and false when it isn't a web address. */
+function normaliseWebsite(v) {
+  const t = String(v ?? '').trim()
+  if (!t) return null
+  const withScheme = /^https?:\/\//i.test(t) ? t : `https://${t}`
+  try {
+    const u = new URL(withScheme)
+    if (!/^https?:$/.test(u.protocol) || !u.hostname.includes('.') || /\s/.test(withScheme)) return false
+    return withScheme
+  } catch {
+    return false
+  }
+}
 
 const filled = (v) => (Array.isArray(v) ? v.length > 0 : typeof v === 'string' ? v.trim() !== '' : v != null)
 
@@ -160,6 +177,7 @@ export default function BrandProfilePage() {
   const [form, setForm] = useState(() => toForm(profile))
   const [status, setStatus] = useState(null) // saving | saved | error
   const [touched, setTouched] = useState({})
+  const [websiteError, setWebsiteError] = useState(null)
   const saved = useRef(toForm(profile)) // values confirmed saved in the database
   const pending = useRef({}) // values sent but not confirmed yet
   const unsaved = useRef({}) // fields whose last save failed
@@ -223,7 +241,18 @@ export default function BrandProfilePage() {
   }
 
   /** "Save brand profile": saves all four tabs at once. */
-  const saveAll = () => persist({ ...formRef.current })
+  const saveAll = () => {
+    const all = { ...formRef.current }
+    const website = normaliseWebsite(all.website)
+    if (website === false) {
+      // Keep the last saved address rather than failing the whole save.
+      setWebsiteError('Please enter a web address, for example sunrisebakery.co.za')
+      all.website = saved.current.website
+    } else {
+      all.website = website ?? ''
+    }
+    return persist(all)
+  }
 
   // Warn before leaving with unsaved changes: in-app navigation…
   const blocker = useBlocker(
@@ -260,6 +289,14 @@ export default function BrandProfilePage() {
   const blur = (key) => () => {
     setTouched((t) => ({ ...t, [key]: true }))
     saveField(key)
+  }
+
+  const blurWebsite = () => {
+    const v = normaliseWebsite(formRef.current.website)
+    if (v === false) return setWebsiteError('Please enter a web address, for example sunrisebakery.co.za')
+    setWebsiteError(null)
+    setForm((f) => ({ ...f, website: v ?? '' }))
+    saveField('website', v ?? '')
   }
 
   const applyDemo = async () => {
@@ -347,6 +384,10 @@ export default function BrandProfilePage() {
                 <dt className="text-muted">Image style</dt>
                 <dd className="mt-1 font-semibold text-heading">{profile.visual_style || '–'}</dd>
               </div>
+              <div>
+                <dt className="text-muted">Language</dt>
+                <dd className="mt-1 font-semibold text-heading">{profile.preferred_language || 'English'}</dd>
+              </div>
             </div>
             <div className="sm:col-span-2">
               <dt className="text-muted">Channels</dt>
@@ -427,11 +468,35 @@ export default function BrandProfilePage() {
               value={form.price_level}
               onChange={setAndSave('price_level')}
             />
+            <Field
+              id="website"
+              label="Your website"
+              example="Optional. Example: sunrisebakery.co.za"
+              type="url"
+              inputMode="url"
+              autoComplete="url"
+              maxLength={300}
+              value={form.website}
+              onChange={(v) => {
+                setWebsiteError(null)
+                set('website')(v)
+              }}
+              onBlur={blurWebsite}
+            />
+            {websiteError && <p className="-mt-3 text-sm font-medium text-error">{websiteError}</p>}
+            <LogoUpload userId={user.id} path={profile?.logo_path ?? null} onSave={(logo_path) => persist({ logo_path })} />
           </>
         )}
 
         {tab === 'voice' && (
           <>
+            <ChoiceGroup
+              label="Language for your content"
+              example="We write your plans, posts, ad scripts and creative briefs in this language."
+              options={LANGUAGES}
+              value={form.preferred_language || 'English'}
+              onChange={setAndSave('preferred_language')}
+            />
             <ChoiceGroup
               label="Pick up to 3 words that describe how you sound"
               example={`Example: Warm, Friendly, Down-to-earth. ${form.tone_words.length} of 3 picked.`}
