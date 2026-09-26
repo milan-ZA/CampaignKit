@@ -19,7 +19,8 @@ CampaignKit helps small business owners with no marketing team. You set up your 
 - **Previews:** see each post as it would look on Instagram, Facebook, TikTok, LinkedIn, WhatsApp, Email, Google Business Profile or an in-store poster, with a length check.
 - **Use it elsewhere:** copy any text for your preferred content app, export the campaign to Excel (.xlsx) or Google Sheets (.csv), and download all images as one ZIP, organised by week.
 - **Content language:** plans, copy, scripts and briefs can be written in English, Afrikaans, isiZulu, isiXhosa, Sesotho, Setswana, French or Portuguese.
-- Light and dark mode, and works on phones.
+- **Account settings** (menu under your initial, top right): see your account details, change your password, choose Light / Dark / Same as my device, see your usage, log out on all devices, or delete your account and everything in it.
+- Works on phones.
 
 ## How it works
 
@@ -116,6 +117,8 @@ To use your own Supabase project instead of the shared one:
 | Channel list, hints, image sizes, "see first" and length limits, languages | `src/lib/channels.js` and `supabase/functions/_shared/brand.ts` |
 | Brand context sent with every OpenAI request | `supabase/functions/_shared/brand.ts` → `buildBrandContext` |
 | AI functions | `supabase/functions/generate-plan`, `generate-asset`, `generate-images` |
+| Account settings page | `src/pages/AccountPage.jsx` and `src/components/AccountMenu.jsx` |
+| Delete my account | `supabase/functions/delete-account`: removes the user's files as that user, then deletes the login with the service role key (the only place it's used); the database removes their rows by cascade |
 | Campaign and posts saved all-or-nothing | RPC `create_campaign_with_items` |
 | Image swap (new rows in, old rows out, in one transaction) | RPC `replace_item_images`; old files are removed only after that succeeds |
 | Post previews (8 channel layouts) | `src/components/plan/PostPreview.jsx` |
