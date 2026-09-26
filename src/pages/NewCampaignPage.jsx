@@ -107,7 +107,7 @@ export default function NewCampaignPage() {
           </div>
           <button
             type="button"
-            className="btn-secondary"
+            className="btn-demo"
             disabled={busy}
             onClick={() => {
               setForm((f) => ({ ...f, ...DEMO_BRIEF }))

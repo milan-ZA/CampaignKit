@@ -395,7 +395,7 @@ export default function BrandProfilePage() {
           <p className="mt-1 text-body">We use this in every plan, post and image we create for you.</p>
         </div>
         {canUseDemo && (
-          <button type="button" className="btn-secondary" onClick={applyDemo} disabled={status === 'saving'}>
+          <button type="button" className="btn-demo" onClick={applyDemo} disabled={status === 'saving'}>
             Use demo profile
           </button>
         )}

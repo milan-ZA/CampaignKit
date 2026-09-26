@@ -33,6 +33,8 @@
   --color-on-accent: var(--c-on-accent);
   --color-hover: var(--c-hover);
   --color-logo-mark: var(--c-logo-mark);
+  --color-demo: var(--c-demo);
+  --color-demo-soft: var(--c-demo-soft);
   --color-logo-text: var(--c-logo-text);
 
   --color-pv-frame: var(--c-pv-frame);
@@ -83,6 +85,8 @@
   --c-hover: #f1f5f9;
   --c-logo-mark: #fa6843;
   --c-logo-text: #152a4e;
+  --c-demo: #6d28d9;
+  --c-demo-soft: #f5f3ff;
 
   --c-pv-frame: #ffffff;
   --c-pv-text: #0f172a;
@@ -144,6 +148,8 @@
   --c-hover: #1b2740;
   --c-logo-mark: #fa6843;
   --c-logo-text: #f1f5f9;
+  --c-demo: #c4b5fd;
+  --c-demo-soft: #2e1065;
 
   --c-pv-frame: #000000;
   --c-pv-text: #f1f5f9;
@@ -214,7 +220,8 @@
   .btn-accent,
   .btn-secondary,
   .btn-ghost,
-  .btn-danger {
+  .btn-danger,
+  .btn-demo {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-60;
   }
   .btn-accent {
@@ -228,6 +235,10 @@
   }
   .btn-danger {
     @apply border border-error text-error hover:bg-error-soft;
+  }
+  /* Demo helpers (Use demo profile / Use demo brief): violet, so they read as 'try it' rather than a main action. */
+  .btn-demo {
+    @apply border border-demo bg-demo-soft text-demo hover:opacity-85;
   }
   .btn-icon {
     @apply inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-heading;

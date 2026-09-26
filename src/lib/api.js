@@ -23,6 +23,12 @@ export async function callFunction(name, body) {
     if (error.name === 'FunctionsFetchError' || error.name === 'FunctionsRelayError') {
       message = "We couldn't reach the server. Check your connection and try again."
     }
+    // The server no longer accepts this login (e.g. after "Log out on all devices"). Retrying can't help,
+    // so sign out here too; the app then returns to the login page.
+    if (error.context?.status === 401) {
+      await supabase.auth.signOut({ scope: 'local' })
+      throw new Error('Your session has ended. Please log in again.')
+    }
     if (error.context?.status === 404) {
       message = `The AI feature "${name}" isn't set up on this Supabase project yet. Deploy the Edge Functions (see README → Deploy your own copy).`
     }
